@@ -1,0 +1,1833 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>簡報設計王 v5｜楊貴傑老師製作</title>
+    
+    <!-- 使用 Tailwind CSS (CDN) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- PDF 與 Google Fonts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        macaron: {
+                            teal: '#ccfbf1',
+                            lime: '#0d9488',
+                            orange: '#fef9c3',
+                            amber: '#f97316',
+                            fuchsia: '#fae8ff',
+                            cyan: '#c026d3',
+                            cyan: '#ede9fe',
+                            violet: '#7c3aed',
+                            lime: '#e0f2fe',
+                            sky: '#0284c7',
+                            yellow: '#fef9c3',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Noto Sans TC', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background: linear-gradient(135deg, #eefcf9 0%, #fff7ed 50%, #f5f3ff 100%);
+            /* 繽紛馬卡龍圓點幾何底紋圖案 */
+            background-image: 
+                radial-gradient(rgba(20, 184, 166, 0.18) 2px, transparent 2px),
+                radial-gradient(rgba(249, 115, 22, 0.15) 2px, #eefcf9 2px);
+            background-size: 36px 36px, 36px 36px;
+            background-position: 0 0, 18px 18px;
+            color: #334155;
+            min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* 夢幻馬卡龍風捲軸 */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        
+        .macaron-card {
+            background: rgba(255, 255, 255, 0.88);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.7);
+            box-shadow: 0 10px 25px -5px rgba(93, 103, 126, 0.15), 0 8px 10px -6px rgba(93, 103, 126, 0.1);
+        }
+
+        /* 背景飄浮與圖案動畫 */
+        @keyframes float-slow {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-14px) rotate(6deg); }
+        }
+        @keyframes float-reverse {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(12px) rotate(-8deg); }
+        }
+        @keyframes pulse-glow {
+            0%, 100% { opacity: 0.5; transform: scale(1); }
+            50% { opacity: 0.8; transform: scale(1.1); }
+        }
+
+        .animate-float-1 { animation: float-slow 6s ease-in-out infinite; }
+        .animate-float-2 { animation: float-reverse 7s ease-in-out infinite; }
+        .animate-pulse-glow { animation: pulse-glow 4s ease-in-out infinite; }
+
+        .loader {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #f97316;
+            border-radius: 50%;
+            width: 22px;
+            height: 22px;
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        .btn-glow {
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .btn-glow:hover {
+            transform: translateY(-3px) scale(1.01);
+            box-shadow: 0 15px 25px -5px rgba(249, 115, 22, 0.35);
+        }
+    
+        /* === 楊貴傑老師 Q版 3D 講師娃娃 & 浮水印 === */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background: url('teacher_mascot.png') center 55% / min(46vw, 420px) no-repeat;
+            opacity: .065;
+            pointer-events: none;
+            z-index: 0;
+            filter: drop-shadow(0 14px 38px rgba(0,0,0,.12));
+        }
+        body > * { position: relative; z-index: 1; }
+        .ygj-floating-brand {
+            position: fixed;
+            right: 18px;
+            bottom: 18px;
+            z-index: 70;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 14px;
+            border-radius: 22px;
+            border: 1px solid rgba(255,255,255,.75);
+            background: rgba(255,255,255,.90);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 14px 34px rgba(39,55,86,.18);
+            max-width: min(92vw, 320px);
+        }
+        .ygj-floating-brand img {
+            width: 66px;
+            height: 66px;
+            border-radius: 18px;
+            object-fit: cover;
+            flex-shrink: 0;
+            background: linear-gradient(135deg,#e0f2fe,#ede9fe,#fef3c7);
+            box-shadow: 0 10px 22px rgba(99,102,241,.18);
+        }
+        .ygj-floating-brand-text { min-width: 0; display:flex; flex-direction:column; }
+        .ygj-floating-brand-text strong { font-size: .98rem; line-height: 1.2; color: #1f2937; }
+        .ygj-floating-brand-text span { font-size: .72rem; color: #6b7280; line-height: 1.3; }
+        .ygj-floating-links { display:flex; flex-wrap:wrap; gap:6px; margin-top:6px; }
+        .ygj-floating-links a {
+            text-decoration: none;
+            font-size: .72rem;
+            font-weight: 800;
+            padding: 4px 9px;
+            border-radius: 999px;
+            background: linear-gradient(135deg,#14b8a6,#f97316,#c026d3);
+            color: white !important;
+            box-shadow: 0 5px 15px rgba(168,85,247,.18);
+            white-space: nowrap;
+        }
+        .ygj-floating-links a:hover { transform: translateY(-1px); opacity: .95; }
+        @media (max-width: 768px) {
+            body::before { background-size: min(70vw, 290px); opacity: .055; background-position: center 50%; }
+            .ygj-floating-brand { right: 10px; bottom: 10px; padding: 8px 10px; gap: 8px; max-width: calc(100vw - 20px); }
+            .ygj-floating-brand img { width: 56px; height: 56px; border-radius: 14px; }
+            .ygj-floating-brand-text strong { font-size: .88rem; }
+            .ygj-floating-brand-text span { font-size: .66rem; }
+        }
+
+        body::before { background-position: center 54%; }
+
+    
+/* 導覽與浮水印精修 */
+body::before {background-image:url('teacher_mascot.png') !important;background-size:clamp(260px,36vw,510px) auto !important;background-position:right 8vw center !important;opacity:.16 !important;filter:contrast(1.08) saturate(.9) !important;}
+body.dark-mode::before,:root[data-theme="dark"] body::before{opacity:.22 !important}
+.ygj-floating-brand {position:fixed !important;right:18px !important;bottom:18px !important;z-index:500 !important;display:block !important;background:none !important;border:0 !important;padding:0 !important;box-shadow:none !important;max-width:none !important;}
+.ygj-trigger{border:1px solid #9b91dc;border-radius:999px;background:linear-gradient(120deg,#483486,#0a7483);box-shadow:0 12px 30px #101a3e55;display:flex;align-items:center;gap:9px;color:white;padding:6px 14px 6px 6px;cursor:pointer;font-size:13px;font-weight:750;}
+.ygj-trigger img{width:44px !important;height:44px !important;object-fit:cover;border-radius:50% !important;border:2px solid white;flex-shrink:0}
+.ygj-panel{position:absolute;right:0;bottom:calc(100% + 10px);width:282px;background:#fbf9ff;border:1px solid #d5caef;border-radius:19px;box-shadow:0 18px 42px #13172b66;padding:15px;display:grid;gap:9px;color:#25254a}
+.ygj-panel[hidden]{display:none !important}
+.ygj-panel-title{display:flex;gap:10px;align-items:center;padding:2px 2px 9px;border-bottom:1px solid #ece6f6}
+.ygj-panel-title img{width:45px !important;height:45px !important;object-fit:cover;border-radius:12px !important;flex-shrink:0}
+.ygj-panel-title b{display:block;font-size:15px;color:#30275d}.ygj-panel-title small{color:#74718a;font-size:11px}
+.ygj-panel a{display:flex;align-items:center;gap:10px;text-decoration:none !important;border:1px solid #e3dff0;border-radius:12px;background:white;color:#312f63 !important;padding:12px;font-size:13px;font-weight:750;transition:background .18s,transform .18s}
+.ygj-panel a:hover{background:#eeeaff;transform:translateX(-2px)}.ygj-panel a.current{background:linear-gradient(110deg,#5b4dca,#0e8b9c);color:white !important;border-color:transparent}
+.ygj-panel a .em{font-size:20px}.ygj-panel-note{text-align:center;font-size:11px;color:#77738e}
+@media(max-width:700px){body::before{background-position:right -12vw center !important;background-size:65vw auto !important;opacity:.14 !important}.ygj-floating-brand{right:10px !important;bottom:10px !important}.ygj-trigger{font-size:12px;padding:5px 12px 5px 5px}.ygj-trigger img{width:38px !important;height:38px !important}.ygj-panel{width:min(282px,calc(100vw - 20px))}}
+
+
+/* Q版老師可移動懸浮入口：原有浮水印與主頁排版不變 */
+#ygj-menu.ygj-floating-brand {
+ position:fixed !important;left:auto !important;top:auto !important;
+ right:18px !important;bottom:18px !important;z-index:1200 !important;
+ width:60px !important;height:60px !important;max-width:none !important;
+ padding:0 !important;background:transparent !important;box-shadow:none !important;
+ touch-action:none;user-select:none;-webkit-user-select:none;
+}
+#ygj-menu .ygj-trigger {
+ width:60px;height:60px;padding:4px !important;border-radius:50% !important;
+ display:grid;place-items:center;gap:0 !important;cursor:grab;touch-action:none;
+ border:2px solid #d9c9ff;background:linear-gradient(135deg,#a78bfa,#0d9488);
+ box-shadow:0 10px 28px rgba(17,34,74,.4),0 0 0 3px rgba(255,255,255,.24);
+}
+#ygj-menu .ygj-trigger:active{cursor:grabbing}
+#ygj-menu .ygj-trigger:focus-visible {outline:3px solid #fbbf24;outline-offset:4px}
+#ygj-menu .ygj-trigger img {width:49px !important;height:49px !important;border:0 !important;border-radius:50% !important;pointer-events:none}
+#ygj-menu .ygj-trigger span {display:none !important}
+#ygj-menu.ygj-dragging .ygj-trigger {box-shadow:0 15px 40px rgba(31,41,92,.45);transform:scale(1.08)}
+#ygj-menu .ygj-panel {left:auto;right:0;bottom:calc(100% + 12px);top:auto;width:282px;touch-action:auto;user-select:text;-webkit-user-select:text}
+#ygj-menu .ygj-panel.ygj-panel-left {left:0;right:auto}
+#ygj-menu .ygj-panel.ygj-panel-below {top:calc(100% + 12px);bottom:auto}
+@media(max-width:700px){#ygj-menu.ygj-floating-brand{width:54px !important;height:54px !important;right:12px !important;bottom:12px !important}#ygj-menu .ygj-trigger{width:54px;height:54px}#ygj-menu .ygj-trigger img{width:45px !important;height:45px !important}#ygj-menu .ygj-panel{width:min(282px,calc(100vw - 24px))}}
+
+
+/* AI 工具中心：簡報設計王深淺雙模式 */
+html[data-theme="dark"] { color-scheme: dark; }
+html[data-theme="dark"] body { background:radial-gradient(circle at 8% 8%,#33214d,transparent 34%),linear-gradient(145deg,#0d1729,#1b2040 55%,#123343) !important; color:#ecf3ff !important; }
+html[data-theme="dark"] header,html[data-theme="dark"] footer { background:rgba(22,33,53,.94) !important; border-color:#425776 !important; }
+html[data-theme="dark"] main section,html[data-theme="dark"] main > div:not(.ygj-menu-wrapper) { border-color:#536786 !important; }
+html[data-theme="dark"] .macaron-card,html[data-theme="dark"] .bg-white,html[data-theme="dark"] .bg-white\/95,html[data-theme="dark"] .bg-white\/90,html[data-theme="dark"] .bg-white\/80,html[data-theme="dark"] .bg-white\/85,html[data-theme="dark"] .bg-white\/70 {background-color:#26354e !important;color:#eef5ff !important;}
+html[data-theme="dark"] [class*="bg-gradient-to-br"],html[data-theme="dark"] [class*="bg-gradient-to-r"]:not(button):not(.ygj-menu-trigger) {background-image:linear-gradient(130deg,#253650,#29334f,#234351) !important;}
+html[data-theme="dark"] [class*="text-slate-"],html[data-theme="dark"] [class*="text-teal-9"],html[data-theme="dark"] [class*="text-orange-9"] {color:#f0f5ff !important;}
+html[data-theme="dark"] [class*="text-teal-7"],html[data-theme="dark"] [class*="text-orange-7"],html[data-theme="dark"] [class*="text-slate-5"] {color:#c2d7ed !important;}
+html[data-theme="dark"] input,html[data-theme="dark"] textarea,html[data-theme="dark"] select {background:#15243b !important;color:#f0f6ff !important;border-color:#5d7191 !important;}
+html[data-theme="dark"] input::placeholder,html[data-theme="dark"] textarea::placeholder {color:#9babc3 !important;}
+html[data-theme="dark"] .ygj-menu-panel {background:#202c45;color:#fff;border-color:#52648d;}
+html[data-theme="dark"] .ygj-menu-link {background:#2b3955;color:#f5f6ff !important;border-color:#58678f;}
+html[data-theme="dark"] .ygj-menu-head strong {color:#fff;}
+html[data-theme="dark"] .ygj-menu-head small,html[data-theme="dark"] .ygj-menu-hint {color:#b8c7e1;}
+.ygj-global-theme {position:fixed;top:18px;right:18px;z-index:100;padding:10px 17px;border-radius:999px;border:1px solid #b5a5e3;background:linear-gradient(120deg,#6d4acb,#0f8998);color:#fff;box-shadow:0 8px 25px #172e4545;cursor:pointer;font-size:14px;font-weight:700}
+.ygj-global-theme:hover {filter:brightness(1.12)}
+@media(max-width:640px){.ygj-global-theme{top:8px;right:8px;padding:7px 11px;font-size:12px}body>header{padding-top:48px}}
+
+/* 全站明暗主題：內容層、文字及控制項同步配色 */
+html[data-theme="dark"] body {--ui-panel:#23344f;--ui-inner:#1b2d47;--ui-line:#516887;--ui-text:#f1f6ff;--ui-muted:#c4d7ef;--ui-title:#fff;--ui-accent:#a7f3d0}
+html[data-theme="dark"] main section,
+html[data-theme="dark"] main .macaron-card,
+html[data-theme="dark"] #avatar-settings,
+html[data-theme="dark"] [class*="bg-teal-"],
+html[data-theme="dark"] [class*="bg-orange-"],
+html[data-theme="dark"] [class*="bg-lime-"],
+html[data-theme="dark"] [class*="bg-fuchsia-"],
+html[data-theme="dark"] [class*="bg-purple-"],
+html[data-theme="dark"] [class*="bg-violet-"],
+html[data-theme="dark"] [class*="bg-amber-"],
+html[data-theme="dark"] [class*="bg-slate-50"],
+html[data-theme="dark"] [class*="bg-gray-"],
+html[data-theme="dark"] [class*="bg-sky-"],
+html[data-theme="dark"] [class*="bg-cyan-"]{
+  background-color:var(--ui-panel)!important;
+  border-color:var(--ui-line)!important;
+}
+html[data-theme="dark"] main section,
+html[data-theme="dark"] main section p,
+html[data-theme="dark"] main section h2,
+html[data-theme="dark"] main section h3,
+html[data-theme="dark"] main section h4,
+html[data-theme="dark"] main section label,
+html[data-theme="dark"] main section span:not([class*="text-white"]):not([class*="text-transparent"]),
+html[data-theme="dark"] main section li,
+html[data-theme="dark"] main section small,
+html[data-theme="dark"] [class*="text-teal-"],
+html[data-theme="dark"] [class*="text-orange-"],
+html[data-theme="dark"] [class*="text-fuchsia-"],
+html[data-theme="dark"] [class*="text-amber-"],
+html[data-theme="dark"] [class*="text-purple-"],
+html[data-theme="dark"] [class*="text-violet-"],
+html[data-theme="dark"] [class*="text-cyan-"],
+html[data-theme="dark"] [class*="text-sky-"],
+html[data-theme="dark"] [class*="text-gray-"],
+html[data-theme="dark"] [class*="text-indigo-"],
+html[data-theme="dark"] [class*="text-lime-"]{
+  color:var(--ui-text)!important;
+}
+html[data-theme="dark"] [class*="text-transparent"]{
+  background-image:linear-gradient(110deg,#8ff3de,#b8b8ff,#ffe7a5)!important;
+  -webkit-background-clip:text!important;background-clip:text!important;
+  -webkit-text-fill-color:transparent!important;
+}
+html[data-theme="dark"] main p[class*="text-"],
+html[data-theme="dark"] main small,
+html[data-theme="dark"] main [class*="text-slate-4"],
+html[data-theme="dark"] main [class*="text-slate-5"] {color:var(--ui-muted)!important}
+html[data-theme="dark"] input,
+html[data-theme="dark"] textarea,
+html[data-theme="dark"] select,
+html[data-theme="dark"] option {background:var(--ui-inner)!important;color:var(--ui-text)!important;border-color:#6983a3!important}
+html[data-theme="dark"] input:focus,
+html[data-theme="dark"] textarea:focus,
+html[data-theme="dark"] select:focus{outline:2px solid #5eead4;outline-offset:1px}
+html[data-theme="dark"] [class*="border-"]{border-color:var(--ui-line)!important}
+html[data-theme="dark"] button:not(.ygj-global-theme):not(.ygj-trigger):not([class*="bg-gradient"]):not([class*="bg-teal-5"]):not([class*="bg-orange-5"]),
+html[data-theme="dark"] [role="button"] {color:#f1f6ff!important}
+html[data-theme="dark"] button[class*="bg-white"],
+html[data-theme="dark"] button[class*="bg-teal-50"],
+html[data-theme="dark"] button[class*="bg-orange-50"],
+html[data-theme="dark"] button[class*="bg-slate-100"]{background:#334968!important}
+html[data-theme="dark"] [class*="bg-gradient"] button[class*="bg-white"]{background:#354b69!important}
+html[data-theme="dark"] button:disabled {opacity:.48!important}
+html[data-theme="dark"] ::placeholder{color:#aebfd5!important}
+html[data-theme="dark"] a:not(.ygj-menu-link){text-underline-offset:3px}
+html[data-theme="dark"] main a:not([class*="text-white"]){color:#9ee8f3}
+html[data-theme="dark"] :is(input,textarea,select,button):focus-visible{outline:2px solid #65e9d1;outline-offset:2px}
+/* 對固定色彩的狀態標籤保留高對比 */
+html[data-theme="dark"] .bg-teal-500, html[data-theme="dark"] .bg-orange-500,
+html[data-theme="dark"] .bg-fuchsia-500{background-color:#0f766e!important}
+html[data-theme="dark"] .text-white{color:white!important}
+html[data-theme="dark"] .ygj-menu-panel{background:#202c45!important;color:#f1f6ff!important}
+
+
+/* 對照截圖修正：風格選項與快捷模式強制採用「深底亮字」 */
+html[data-theme="dark"] #style-buttons-container > button {
+  background: #172b47 !important;
+  background-image: none !important;
+  color: #f8fbff !important;
+  border: 2px solid #647eaa !important;
+  box-shadow: 0 5px 16px rgba(0,0,0,.19) !important;
+}
+html[data-theme="dark"] #style-buttons-container > button:hover,
+html[data-theme="dark"] #style-buttons-container > button:focus-visible {
+  background: #254569 !important;
+  background-image: none !important;
+  border-color: #89e7ed !important;
+}
+html[data-theme="dark"] #style-buttons-container > button > div:first-child {
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+}
+html[data-theme="dark"] #style-buttons-container > button > div:nth-child(2) {
+  color: #d3e4fa !important;
+  -webkit-text-fill-color: #d3e4fa !important;
+}
+html[data-theme="dark"] button.quick-btn {
+  background: #1e4260 !important;
+  background-image: none !important;
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+  border: 2px solid #6bacc7 !important;
+  text-shadow: none !important;
+}
+html[data-theme="dark"] button.quick-btn:hover,
+html[data-theme="dark"] button.quick-btn:focus-visible {
+  background: #286080 !important;
+  background-image: none !important;
+  color: #fff !important;
+}
+html[data-theme="dark"] #style-tabs-container > button:not([class*="bg-orange-600"]) {
+  background: #294367 !important;
+  background-image: none !important;
+  color: #fff !important;
+  border-color: #607da4 !important;
+}
+html[data-theme="dark"] #style-tabs-container > button[class*="bg-orange-600"] {
+  background: #0c8c98 !important;
+  color: #fff !important;
+}
+/* 暗色模式中另外的淺灰漸層按鈕同步修復 */
+html[data-theme="dark"] main button[class*="from-sky-100"],
+html[data-theme="dark"] main button[class*="from-white"] {
+  background: #23405f !important;
+  background-image: none !important;
+  color: #fff !important;
+}
+
+</style>
+</head>
+<body class="min-h-screen flex flex-col antialiased selection:bg-teal-200 selection:text-teal-900 relative">
+<button type="button" id="ygj-theme-toggle" class="ygj-global-theme" aria-label="切換亮色暗色系">🌙 切換暗色系</button>
+
+
+    <div class="ygj-floating-brand" id="ygj-menu"><button type="button" class="ygj-trigger" id="ygj-trigger" aria-controls="ygj-panel" aria-expanded="false"><img src="teacher_mascot.png" alt="Q版楊貴傑老師"><span>AI 工具選單 ▴</span></button><nav class="ygj-panel" id="ygj-panel" aria-label="網站工具導覽" hidden><div class="ygj-panel-title"><img src="teacher_mascot.png" alt=""><span><b>楊貴傑老師</b><small>AI 多媒體工具中心</small></span></div><a target="_blank" rel="noopener noreferrer" href="index.html" class="current"><span class="em">📊</span>簡報設計王</a><a target="_blank" rel="noopener noreferrer" href="xx.html"><span class="em">🎙️</span>對話式語音產生器</a><a target="_blank" rel="noopener noreferrer" href="yy.html"><span class="em">🎬</span>圖音合併工具</a><div class="ygj-panel-note">選擇工具，即可切換網頁</div></nav></div>
+
+    <!-- 動態背景裝飾物 (Background Decorative Elements) -->
+    <div class="fixed inset-0 pointer-events-none z-0 overflow-hidden">
+        <div class="absolute top-10 left-8 w-64 h-64 bg-teal-300/20 rounded-full blur-3xl animate-pulse-glow"></div>
+        <div class="absolute top-1/3 right-10 w-80 h-80 bg-orange-300/20 rounded-full blur-3xl animate-pulse-glow" style="animation-delay: 1.5s;"></div>
+        <div class="absolute bottom-20 left-1/4 w-72 h-72 bg-fuchsia-300/20 rounded-full blur-3xl animate-pulse-glow" style="animation-delay: 3s;"></div>
+
+        <!-- 漂浮幾何與童趣繪圖 SVG 圖案 -->
+        <div class="absolute top-16 left-[5%] text-teal-400/40 animate-float-1 text-3xl font-black">✦</div>
+        <div class="absolute top-36 right-[8%] text-orange-400/40 animate-float-2 text-4xl font-black">✨</div>
+        <div class="absolute top-1/2 left-[2%] text-sky-400/40 animate-float-2 text-3xl font-black">☁️</div>
+        <div class="absolute bottom-1/3 right-[3%] text-violet-400/40 animate-float-1 text-4xl font-black">🎨</div>
+        <div class="absolute bottom-12 left-[8%] text-fuchsia-400/40 animate-float-1 text-3xl font-black">★</div>
+    </div>
+
+    <!-- 頂部導覽列 (含清晰標題) -->
+    <header class="bg-white/85 backdrop-blur-md border-b-2 border-teal-200/80 sticky top-0 z-40 shadow-sm">
+        <div class="max-w-[1600px] mx-auto px-4 sm:px-8 h-20 flex items-center justify-between">
+            <!-- 標題區域 -->
+            <div class="flex items-center gap-3">
+                <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-teal-400 via-orange-400 to-fuchsia-400 p-0.5 shadow-md flex items-center justify-center transform -rotate-3 hover:rotate-0 transition-transform duration-300">
+                    <div class="w-full h-full bg-white rounded-[14px] flex items-center justify-center text-xl">
+                        👑
+                    </div>
+                </div>
+                <div>
+                    <div class="flex items-center gap-2">
+                        <h1 class="text-xl sm:text-2xl font-black bg-gradient-to-r from-teal-600 via-orange-600 to-yellow-600 bg-clip-text text-transparent tracking-wide">
+                            簡報設計王
+                        </h1>
+                        <span class="text-xs px-2.5 py-0.5 bg-gradient-to-r from-teal-500 to-orange-500 text-white font-black rounded-full shadow-sm">
+                            v5
+                        </span>
+                    </div>
+                    <p class="text-xs text-orange-600 font-bold hidden sm:block">AI 簡報架構與視覺規劃大師</p>
+                </div>
+            </div>
+
+            <!-- API 按鈕 -->
+            <div class="flex items-center gap-3">
+                <button id="btn-api-modal" class="text-xs sm:text-sm px-4 py-2 bg-white/90 hover:bg-teal-50 border-2 border-teal-200 text-orange-900 rounded-2xl transition font-black flex items-center shadow-sm hover:scale-105 active:scale-95">
+                    <svg class="w-4 h-4 mr-1.5 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"></path></svg>
+                    設定 API Key
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- 主要設定區 (單欄放大版面) -->
+    <main class="relative z-10 flex-grow max-w-[1400px] w-full mx-auto p-4 sm:p-6 lg:p-8 flex flex-col gap-8">
+        
+        <!-- 活潑頂部 Hero 歡迎 Banner -->
+        <div class="text-center py-4 sm:py-6 bg-gradient-to-r from-teal-100/80 via-orange-100/80 to-fuchsia-100/80 rounded-3xl border-2 border-white/80 shadow-sm backdrop-blur-md">
+            <h2 class="text-2xl sm:text-3xl font-black text-slate-800 tracking-wide mb-2 flex items-center justify-center gap-2">
+                <span>✨</span>
+                <span>打造專屬高品質簡報規劃</span>
+                <span>🎨</span>
+            </h2>
+            <p class="text-xs sm:text-sm font-bold text-orange-700 max-w-xl mx-auto px-4">
+                只需簡單 3 個步驟，AI 將為您精心建構每頁簡報主題、排版指南與生圖提示詞！
+            </p>
+        </div>
+
+        <!-- 區塊 1: 人像主講 -->
+        <section class="relative overflow-hidden bg-gradient-to-br from-teal-50/90 via-white/90 to-lime-50/40 rounded-3xl border-2 border-teal-200/70 p-6 sm:p-8 shadow-[0_15px_30px_-8px_rgba(244,114,182,0.15)] transition-all duration-300 hover:shadow-[0_20px_40px_-5px_rgba(244,114,182,0.22)] hover:border-teal-300">
+            <!-- 背景夢幻微光視覺裝飾 -->
+            <div class="absolute -top-12 -right-12 w-48 h-48 bg-teal-200/35 rounded-full blur-3xl pointer-events-none"></div>
+            <div class="absolute -bottom-12 -left-12 w-48 h-48 bg-lime-200/25 rounded-full blur-3xl pointer-events-none"></div>
+
+            <div class="relative z-10 flex items-center justify-between mb-5">
+                <div class="flex items-center gap-3">
+                    <div class="bg-gradient-to-r from-teal-500 to-lime-400 text-white font-black px-3.5 py-1.5 rounded-2xl text-xs sm:text-sm tracking-wider shadow-md shadow-teal-200/80 flex items-center gap-1">
+                        <span>STEP</span>
+                        <span class="text-base font-black">01</span>
+                    </div>
+                    <h2 class="text-lg sm:text-xl font-black text-teal-950 tracking-wide">
+                        人像主講設定 <span class="text-xs sm:text-sm font-normal text-teal-500 ml-1">(選填)</span>
+                    </h2>
+                </div>
+                <label class="flex items-center cursor-pointer">
+                    <div class="relative">
+                        <input type="checkbox" id="toggle-avatar" class="sr-only">
+                        <div class="block bg-slate-200 w-12 h-6 rounded-full transition" id="toggle-avatar-bg"></div>
+                        <div class="dot absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition transform shadow-md" id="toggle-avatar-dot"></div>
+                    </div>
+                </label>
+            </div>
+
+            <div class="relative z-10 flex items-start gap-2.5 bg-white/80 backdrop-blur-md p-4 rounded-2xl border border-teal-200/80 shadow-sm mb-5">
+                <span class="text-lg leading-none mt-0.5">💡</span>
+                <p class="text-xs sm:text-sm text-teal-800 leading-relaxed font-medium">
+                    <strong>功能說明：</strong>啟用此功能後，AI 將自動在每一頁的「排版指南」與「生圖提示詞」中，融入您所上傳的主講者角色人物，讓您的專屬角色生動地呈現在每一頁簡報中主講內容！
+                </p>
+            </div>
+
+            <div id="avatar-settings" class="hidden relative z-10 space-y-5 border-t border-teal-200/60 pt-5">
+                <div class="text-xs text-teal-800 bg-teal-100/80 p-3 rounded-2xl border border-teal-200/80 font-bold mb-3 shadow-sm flex items-center gap-2">
+                    <span>💡</span>
+                    <span><strong>模式選擇說明：</strong>方案 A (自訂角色) 與 方案 B/C (畫風/照片 PDF) 為互斥選項。輸入 A 時 B/C 自動停用；選擇 B 或 C 時 A 自動停用。</span>
+                </div>
+
+                <!-- 方案 A -->
+                <div id="container-avatar-a" class="transition-all duration-300">
+                    <label class="block text-sm font-bold text-teal-900 mb-2 flex items-center justify-between">
+                        <span>方案 A. 自訂角色名稱或形象設定 <span class="text-xs font-normal text-teal-500">(選填)</span></span>
+                        <span id="badge-avatar-a" class="text-xs font-black text-teal-700 bg-teal-100 px-2.5 py-0.5 rounded-full border border-teal-300 shadow-sm hidden">✓ 已選用方案 A</span>
+                    </label>
+                    <input type="text" id="input-avatar-name" placeholder="例如：Q版可愛的卡皮巴拉、小熊隊長、智慧貓頭鷹..." class="w-full text-sm sm:text-base border border-teal-200 rounded-xl px-4 py-2.5 bg-white focus:outline-none focus:ring-2 focus:ring-teal-300 transition shadow-sm">
+                </div>
+
+                <!-- 方案 B & C 包裹容器 -->
+                <div id="container-avatar-bc" class="space-y-5 transition-all duration-300">
+                    <div>
+                        <label class="block text-sm font-bold text-teal-900 mb-2 flex items-center justify-between">
+                            <span>方案 B. 選擇畫風產生提示詞 <span class="text-xs font-normal text-teal-500">(選填)</span></span>
+                            <span id="badge-avatar-b" class="text-xs font-black text-orange-700 bg-orange-100 px-2.5 py-0.5 rounded-full border border-orange-300 shadow-sm hidden">✓ 已選用方案 B</span>
+                        </label>
+                        <select id="select-avatar-type" class="w-full text-sm sm:text-base border border-teal-200 rounded-xl px-4 py-3 bg-white focus:outline-none focus:ring-2 focus:ring-teal-300 transition shadow-sm">
+                            <option value="">-- 請選擇小老師畫風 --</option>
+                            <option value="專業商務似顏繪">專業商務似顏繪</option>
+                            <option value="Q版立體似顏繪">Q版立體似顏繪</option>
+                            <option value="日系動漫似顏繪">日系動漫似顏繪</option>
+                            <option value="藝術水彩似顏繪">藝術水彩似顏繪</option>
+                            <option value="歐美漫畫似顏繪">歐美漫畫似顏繪</option>
+                            <option value="簡約線條似顏繪">簡約線條似顏繪</option>
+                            <option value="像素藝術似顏繪">像素藝術似顏繪</option>
+                            <option value="黏土人偶似顏繪">黏土人偶似顏繪</option>
+                            <option value="賽博龐克似顏繪">賽博龐克似顏繪</option>
+                            <option value="復古普普似顏繪">復古普普似顏繪</option>
+                            <option value="潮流盲盒公仔">潮流盲盒公仔</option>
+                            <option value="毛線羊毛氈風">毛線羊毛氈風</option>
+                            <option value="溫馨童話繪本">溫馨童話繪本</option>
+                            <option value="活潑扁平卡通">活潑扁平卡通</option>
+                            <option value="森林系布偶風">森林系布偶風</option>
+                        </select>
+                    </div>
+                    
+                    <div id="avatar-prompt-area" class="hidden">
+                        <textarea id="avatar-prompt-text" readonly class="w-full h-24 text-xs sm:text-sm bg-slate-900 text-violet-300 p-3 rounded-xl font-mono font-bold mb-2 resize-none shadow-inner border border-slate-700 leading-relaxed"></textarea>
+                        <button id="btn-copy-avatar-prompt" class="w-full text-sm bg-white hover:bg-teal-50 text-teal-700 py-2.5 rounded-xl font-bold transition flex items-center justify-center border border-teal-200 shadow-sm">複製咒語去生圖</button>
+                    </div>
+
+                    <div class="pt-3 border-t border-teal-100">
+                        <label class="block text-sm font-bold text-teal-900 mb-2 flex items-center justify-between">
+                            <span>方案 C. 上傳已生成的圖片製作 PDF <span class="text-xs font-normal text-teal-500">(選填)</span></span>
+                            <span id="badge-avatar-c" class="text-xs font-black text-violet-700 bg-violet-100 px-2.5 py-0.5 rounded-full border border-violet-300 shadow-sm hidden">✓ 已選用方案 C</span>
+                        </label>
+                        <input type="file" id="file-avatar-upload" accept="image/*" class="w-full text-sm file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-bold file:bg-teal-100 file:text-teal-700 hover:file:bg-teal-200 border border-teal-200 rounded-xl bg-white">
+                        <div id="avatar-pdf-status" class="mt-2 text-sm text-violet-600 hidden font-bold flex items-center justify-between">
+                            <span>✓ PDF 生成成功 (已自動下載為「主講者.pdf」)</span>
+                            <button id="btn-clear-avatar-c" class="text-xs text-red-500 underline hover:text-red-700 ml-2">移除檔案</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 區塊 2: 內容與檔案上傳 (STEP 02) -->
+        <section class="relative overflow-hidden bg-gradient-to-br from-fuchsia-50/90 via-white/90 to-cyan-50/40 rounded-3xl border-2 border-fuchsia-200/70 p-6 sm:p-8 shadow-[0_15px_30px_-8px_rgba(192,38,211,0.15)] transition-all duration-300 hover:shadow-[0_20px_40px_-5px_rgba(192,38,211,0.22)] hover:border-fuchsia-300">
+            <div class="absolute -top-12 -right-12 w-48 h-48 bg-fuchsia-200/35 rounded-full blur-3xl pointer-events-none"></div>
+            <div class="absolute -bottom-12 -left-12 w-48 h-48 bg-cyan-200/25 rounded-full blur-3xl pointer-events-none"></div>
+
+            <div class="relative z-10 flex items-center gap-3 mb-5">
+                <div class="bg-gradient-to-r from-fuchsia-500 to-cyan-500 text-white font-black px-3.5 py-1.5 rounded-2xl text-xs sm:text-sm tracking-wider shadow-md shadow-fuchsia-200/80 flex items-center gap-1">
+                    <span>STEP</span>
+                    <span class="text-base font-black">02</span>
+                </div>
+                <h2 class="text-lg sm:text-xl font-black text-fuchsia-950 tracking-wide">
+                    內容與檔案上傳
+                </h2>
+            </div>
+
+            <div class="relative z-10 flex items-start gap-2.5 bg-white/80 backdrop-blur-md p-4 rounded-2xl border border-fuchsia-200/80 shadow-sm mb-5">
+                <span class="text-lg leading-none mt-0.5">💡</span>
+                <p class="text-xs sm:text-sm text-fuchsia-800 leading-relaxed font-medium">
+                    <strong>功能說明：</strong>您可以直接輸入演講大綱與主題需求，或者上傳您的講義教材 PDF / 圖片檔案，讓 AI 為您精準提取核心內容！
+                </p>
+            </div>
+
+            <div class="relative z-10 space-y-5">
+                <div>
+                    <label class="block text-sm font-bold text-fuchsia-900 mb-2">預計總頁數</label>
+                    <input type="number" id="input-pages" value="10" min="1" max="30" class="w-full text-sm sm:text-base border border-fuchsia-200 rounded-xl px-4 py-2.5 bg-white focus:outline-none focus:ring-2 focus:ring-fuchsia-300 transition shadow-sm font-bold text-fuchsia-900">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-bold text-fuchsia-900 mb-2">簡報文本內容</label>
+                    <textarea id="input-text-content" placeholder="請貼上演講稿或文本內容..." class="w-full h-36 border border-fuchsia-200 rounded-2xl p-4 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-fuchsia-300 transition resize-y bg-white shadow-sm leading-relaxed"></textarea>
+                    <div class="mt-2 flex flex-wrap items-center gap-3"><button type="button" class="voice-button rounded-xl px-4 py-2.5 bg-fuchsia-100 hover:bg-fuchsia-200 text-slate-800 border border-fuchsia-300 shadow-sm transition" data-voice-target="input-text-content" aria-pressed="false">🎙️ 開始語音輸入</button><span class="voice-status text-xs text-slate-600" data-voice-status="input-text-content" role="status" aria-live="polite">點擊麥克風，使用繁體中文說出簡報內容</span></div>
+                </div>
+
+                <div class="border-2 border-dashed border-fuchsia-300/80 rounded-2xl p-5 bg-fuchsia-50/50 backdrop-blur-md space-y-3">
+                    <label class="block text-sm font-bold text-fuchsia-900">補充檔案 <span class="text-xs font-normal text-fuchsia-500">(選填, 圖片或 PDF)</span></label>
+                    <input type="file" id="file-main-upload" accept="image/*,application/pdf" class="w-full text-sm file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-bold file:bg-fuchsia-100 file:text-fuchsia-700 hover:file:bg-fuchsia-200 border border-fuchsia-200 rounded-xl bg-white shadow-sm">
+                    <div id="main-file-status" class="mt-2 text-sm text-fuchsia-700 hidden font-bold flex items-center justify-between bg-white p-3 rounded-xl border border-fuchsia-200">
+                        <span class="truncate">✓ 已上傳: <span id="main-file-name" class="text-fuchsia-900 font-extrabold"></span></span>
+                        <button id="btn-remove-main-file" class="text-xs text-red-500 hover:text-red-700 font-bold underline ml-2 flex-shrink-0">移除檔案</button>
+                    </div>
+                    
+                    <div id="toggle-original-image-area" class="pt-3 border-t border-fuchsia-200/80 hidden">
+                        <label class="flex items-center cursor-pointer text-xs sm:text-sm font-bold text-fuchsia-900">
+                            <input type="checkbox" id="toggle-original-images" class="mr-2.5 w-4 h-4 rounded text-fuchsia-600 focus:ring-fuchsia-400">
+                            <span>保留原件中的圖片排版</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 區塊 3: 偏好與風格自訂 (STEP 03) -->
+        <section class="relative overflow-hidden bg-gradient-to-br from-orange-50/90 via-white/90 to-yellow-50/40 rounded-3xl border-2 border-orange-200/70 p-6 sm:p-8 shadow-[0_15px_30px_-8px_rgba(168,85,247,0.15)] transition-all duration-300 hover:shadow-[0_20px_40px_-5px_rgba(168,85,247,0.22)] hover:border-orange-300">
+            <!-- 背景夢幻微光視覺裝飾 -->
+            <div class="absolute -top-12 -right-12 w-48 h-48 bg-orange-200/35 rounded-full blur-3xl pointer-events-none"></div>
+            <div class="absolute -bottom-12 -left-12 w-48 h-48 bg-yellow-200/25 rounded-full blur-3xl pointer-events-none"></div>
+
+            <div class="relative z-10 flex items-center gap-3 mb-5">
+                <div class="bg-gradient-to-r from-orange-500 to-yellow-400 text-white font-black px-3.5 py-1.5 rounded-2xl text-xs sm:text-sm tracking-wider shadow-md shadow-orange-200/80 flex items-center gap-1">
+                    <span>STEP</span>
+                    <span class="text-base font-black">03</span>
+                </div>
+                <h2 class="text-lg sm:text-xl font-black text-orange-950 tracking-wide">
+                    自訂偏好與風格設計
+                </h2>
+            </div>
+
+            <div class="relative z-10 flex items-start gap-2.5 bg-white/80 backdrop-blur-md p-4 rounded-2xl border border-orange-200/80 shadow-sm mb-6">
+                <span class="text-lg leading-none mt-0.5">💡</span>
+                <p class="text-xs sm:text-sm text-orange-800 leading-relaxed font-medium">
+                    <strong>功能說明：</strong>為簡報設定適合的主軸與對象，並強烈建議<strong>先點選下方「50種風格頁籤」</strong>進行美學打底，最後點選<strong>「快捷模式按鈕」</strong>疊加特定的分鏡或繪本故事導向指令！
+                </p>
+            </div>
+
+            <div class="relative z-10 space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-sm font-bold text-orange-900 mb-2">簡報主軸</label>
+                        <select id="select-theme" class="w-full text-sm sm:text-base border border-orange-200 rounded-xl px-4 py-2.5 bg-white focus:outline-none focus:ring-2 focus:ring-orange-300 shadow-sm">
+                            <option value="">-- AI 決定 --</option>
+                            <option value="成果簡報">成果簡報 (適用於績效總結、年度/季度匯報與成果展現)</option>
+                            <option value="教學簡報">教學簡報 (適用於課堂教學、概念解說與知識傳遞)</option>
+                            <option value="專案報告">專案報告 (適用於進度追蹤、提案審查與策略討論)</option>
+                            <option value="產品發表">產品發表 (適用於新品上市、功能展示與亮點行銷)</option>
+                            <option value="教育訓練">教育訓練 (適用於新人培訓、技能提升與 SOP 宣導)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-orange-900 mb-2">簡報對象</label>
+                        <select id="select-audience" class="w-full text-sm sm:text-base border border-orange-200 rounded-xl px-4 py-2.5 bg-white focus:outline-none focus:ring-2 focus:ring-orange-300 shadow-sm">
+                            <option value="">-- AI 決定 --</option>
+                            <option value="上司/主管">上司/主管</option>
+                            <option value="國小學生">國小學生</option>
+                            <option value="國中學生">國中學生</option>
+                            <option value="比賽評審">比賽評審</option>
+                            <option value="一般大眾">一般大眾</option>
+                            <option value="專業客戶">專業客戶</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-orange-900 mb-2">排版偏好</label>
+                        <select id="select-layout-pref" class="w-full text-sm sm:text-base border border-orange-200 rounded-xl px-4 py-2.5 bg-white focus:outline-none focus:ring-2 focus:ring-orange-300 shadow-sm">
+                            <option value="">-- AI 決定 --</option>
+                            <option value="文字分項目以區塊呈現">文字分項區塊呈現</option>
+                            <option value="不規則活潑排版">不規則活潑排版</option>
+                            <option value="由程式依內容決定">由 AI 依內容決定</option>
+                            <option value="圖大字少，極簡風格">圖大字少，極簡風格</option>
+                            <option value="重點放大，強烈對比">重點放大，強烈對比</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- 50種風格庫：分頁籤設計 -->
+                <div class="border-2 border-orange-200/80 rounded-2xl p-5 bg-white/95 backdrop-blur-md space-y-4 shadow-sm">
+                    <div class="flex items-center justify-between">
+                        <label class="block text-sm font-black text-orange-950 tracking-wide">🎨 50 種預設風格庫 (點選預設打底視覺風格)</label>
+                    </div>
+                    <!-- 分類頁籤 -->
+                    <div id="style-tabs-container" class="flex flex-wrap gap-2 border-b border-orange-100 pb-3">
+                        <!-- 由 JS 動態注入頁籤按鈕 -->
+                    </div>
+                    <!-- 風格按鈕網格 -->
+                    <div id="style-buttons-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 min-h-[160px]">
+                        <!-- 由 JS 根據當前頁籤動態注入風格 -->
+                    </div>
+                </div>
+
+                <!-- 快捷模式 -->
+                <div class="bg-sky-50/80 backdrop-blur-md border-2 border-sky-200/80 p-5 rounded-2xl">
+                    <label class="block text-sm font-black text-sky-950 mb-1">🚀 快捷情境模式</label>
+                    <p class="text-xs text-sky-800 font-semibold mb-3 flex items-center">
+                        <svg class="w-4 h-4 mr-1 text-sky-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        提示：建議先點選上方「50種風格」頁籤選擇風格，再點選下方「快捷模式」疊加優化指令！
+                    </p>
+                    <div class="flex flex-wrap gap-2.5">
+                        <button class="quick-btn text-xs sm:text-sm bg-gradient-to-r from-sky-100 via-sky-50 to-orange-100 hover:from-sky-200 hover:to-orange-200 border border-sky-300 rounded-xl px-4 py-2.5 text-sky-950 transition font-bold shadow-sm hover:scale-[1.02] active:scale-[0.98]" 
+                                data-text="製作成繪本，故事主角設定要發想，只有第一頁有標題，第二頁之後都沒有標題只有內容，故事整體以該主角展開故事發想，且排版設計以『大圖少字』的故事感及精美畫面渲染為主。">📖 繪本模式</button>
+                        <button class="quick-btn text-xs sm:text-sm bg-gradient-to-r from-sky-100 via-sky-50 to-orange-100 hover:from-sky-200 hover:to-orange-200 border border-sky-300 rounded-xl px-4 py-2.5 text-sky-950 transition font-bold shadow-sm hover:scale-[1.02] active:scale-[0.98]" 
+                                data-text="完整保留原件文件中每一頁簡報的標題、頁面文字、對應說明，以及所有的照片、插圖與數據圖表。請按原簡報分頁或邏輯重新設計排版，打造出兼具簡潔、現代與高度專業感的頂級商務簡報版面。">📊 成果簡報模式</button>
+                        <button class="quick-btn text-xs sm:text-sm bg-gradient-to-r from-sky-100 via-sky-50 to-orange-100 hover:from-sky-200 hover:to-orange-200 border border-sky-300 rounded-xl px-4 py-2.5 text-sky-950 transition font-bold shadow-sm hover:scale-[1.02] active:scale-[0.98]" 
+                                data-text="使用可愛的Q版大頭娃娃角色畫風。除了第一頁保留封面標題外，第二頁之後無標題、僅呈現精采故事內容。後續每一頁需使用非制式化的漫畫分鏡，將畫面切割為 3-4 格呈現角色對話，允許人物活潑地跨出分鏡框，以漫畫人物對白與對話框方式生動呈現，並整體貫穿設計出一個精彩完整的漫畫情境故事。">💬 漫畫分鏡模式</button>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-bold text-orange-900 mb-2">已選風格與客製化指令</label>
+                    <textarea id="input-style" placeholder="點選風格或快捷按鈕將自動載入，也可在此手動修改或補充客製化指令..." class="w-full h-28 border border-orange-200 rounded-2xl p-4 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-orange-300 transition resize-y bg-white shadow-sm leading-relaxed"></textarea>
+                    <div class="mt-2 flex flex-wrap items-center gap-3"><button type="button" class="voice-button rounded-xl px-4 py-2.5 bg-orange-100 hover:bg-orange-200 text-slate-800 border border-orange-300 shadow-sm transition" data-voice-target="input-style" aria-pressed="false">🎙️ 開始語音輸入</button><span class="voice-status text-xs text-slate-600" data-voice-status="input-style" role="status" aria-live="polite">點擊麥克風，使用繁體中文說出客製化指令</span></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 手動 Gemini / API 模式選擇 -->
+        <section class="bg-white/95 rounded-3xl border-2 border-teal-200 p-5 sm:p-7 shadow-md" id="generate-mode-panel">
+            <h2 class="text-lg text-teal-900 mb-3">🧩 簡報生成方式</h2>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <label class="rounded-2xl border-2 border-teal-400 bg-teal-50 p-4 cursor-pointer flex gap-3"><input type="radio" name="generation-mode" value="manual" checked class="accent-teal-600 mt-1"><span>🆓 免 API Key 模式<br><small class="text-slate-600">產生完整提示詞，複製至 Gemini 網頁執行</small></span></label>
+                <label class="rounded-2xl border border-slate-200 bg-white p-4 cursor-pointer flex gap-3"><input type="radio" name="generation-mode" value="api" class="accent-teal-600 mt-1"><span>🤖 Gemini API 模式<br><small class="text-slate-600">有可用 API Key 時直接生成逐頁規劃</small></span></label>
+            </div>
+            <p class="text-xs text-slate-600 mt-3" id="generation-mode-hint">免 API 模式不會在本站直接呼叫 AI；需複製提示詞到 Gemini 網頁貼上送出。</p>
+        </section>
+        <!-- 生成簡報規劃與檢視結果按鈕組 (雙欄呈現) -->
+        <div class="pt-2">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <button id="btn-generate" class="btn-glow w-full bg-gradient-to-r from-teal-500 via-orange-500 to-fuchsia-500 text-white font-black py-4 px-6 rounded-2xl shadow-lg transition-all flex items-center justify-center text-base sm:text-lg tracking-wider">
+                    <span id="generate-text">✨ 開始生成簡報規劃 (開啟全畫面展演圖層)</span>
+                    <div id="generate-loader" class="loader ml-3 hidden"></div>
+                </button>
+                <button id="btn-reopen-results" disabled class="w-full bg-slate-200 text-slate-400 font-bold py-4 px-6 rounded-2xl transition-all flex items-center justify-center text-base sm:text-lg cursor-not-allowed opacity-60 shadow-sm">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                    檢視簡報規劃全畫面
+                </button>
+            </div>
+            <div id="error-message" class="text-sm text-red-600 bg-red-50 border border-red-200 p-4 rounded-2xl hidden mt-4 font-semibold"></div>
+        </div>
+
+    </main>
+
+    <!-- ==================== 全畫面沉浸式結果新圖層 (Fullscreen Results Overlay Modal) ==================== -->
+    <div id="results-modal" class="fixed inset-0 bg-slate-900/70 backdrop-blur-md hidden z-50 flex-col overflow-hidden transition-all duration-300">
+        
+        <!-- 全螢幕頂部工具列 -->
+        <header class="bg-white/95 border-b border-orange-100 px-6 py-4 flex flex-wrap items-center justify-between gap-4 shadow-sm flex-shrink-0">
+            <div class="flex items-center gap-3">
+                <span class="w-3 h-8 bg-gradient-to-b from-teal-500 to-orange-600 rounded-full"></span>
+                <div>
+                    <p class="text-xs font-bold text-orange-600 uppercase tracking-widest">Presentation Plan</p>
+                    <h2 id="result-topic" class="text-lg sm:text-xl font-black text-slate-800"></h2>
+                </div>
+            </div>
+
+            <!-- 操作按鈕列 -->
+            <div class="flex items-center gap-2.5 flex-wrap">
+                <button id="btn-copy-all" class="text-sm px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold transition flex items-center gap-1.5 border border-slate-200">
+                    📋 複製全文
+                </button>
+                <button id="btn-download-txt" class="text-sm px-4 py-2 bg-fuchsia-100 hover:bg-fuchsia-200 text-fuchsia-800 rounded-xl font-bold transition flex items-center gap-1.5 border border-fuchsia-200 shadow-sm">
+                    💾 完整規劃.txt (生成簡報用)
+                </button>
+                <button id="btn-download-pure" class="text-sm px-4 py-2 bg-violet-100 hover:bg-violet-200 text-violet-800 rounded-xl font-bold transition flex items-center gap-1.5 border border-violet-200 shadow-sm">
+                    📄 純文字.txt (語音配音用)
+                </button>
+                <button id="btn-close-results" class="text-sm px-4 py-2 bg-teal-500 hover:bg-teal-600 text-white rounded-xl font-bold transition flex items-center gap-1 shadow-md ml-2">
+                    ✕ 關閉全畫面
+                </button>
+            </div>
+        </header>
+
+        <!-- 主體內容區 (雙欄：左側 NotebookLM 與風格，右側放大 Slide 卡片) -->
+        <div class="flex-grow overflow-y-auto p-4 sm:p-6 lg:p-8">
+            <div class="max-w-[1700px] mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+                
+                <!-- 左側：整體風格與 NotebookLM 指南 (獨立捲動區域) -->
+                <div class="lg:col-span-4 flex flex-col gap-6 sticky top-0 lg:max-h-[calc(100vh-140px)] lg:overflow-y-auto pr-1">
+                    
+                    <!-- 全局風格 -->
+                    <div class="bg-gradient-to-br from-teal-50 to-orange-50 border border-orange-200/80 rounded-2xl p-5 shadow-sm">
+                        <p class="text-xs font-black text-orange-600 uppercase tracking-wider mb-1">Global Aesthetic Style</p>
+                        <h3 class="text-base font-bold text-orange-950 mb-2">整體一致性風格</h3>
+                        <p id="result-global-style" class="text-sm text-slate-700 leading-relaxed bg-white/80 p-4 rounded-xl border border-orange-100/80 shadow-inner font-medium"></p>
+                    </div>
+
+                    <!-- NotebookLM 密技指南 -->
+                    <div class="bg-gradient-to-br from-orange-50 via-yellow-50 to-fuchsia-50 border border-orange-200 rounded-2xl p-5 shadow-sm space-y-4">
+                        <h3 class="text-sm sm:text-base font-black text-orange-950 flex items-center gap-2">
+                            <span class="p-1 bg-orange-200 text-orange-800 rounded-lg">🚀</span>
+                            把這個變成真正的簡報？(NotebookLM 密技)
+                        </h3>
+                        
+                        <div class="text-xs sm:text-sm text-slate-700 space-y-3 leading-relaxed">
+                            <div class="bg-white/80 p-3.5 rounded-xl border border-orange-100 text-orange-950 font-medium">
+                                <span class="bg-orange-600 text-white px-2 py-0.5 rounded text-xs font-bold mr-1.5 shadow-sm">步驟 1</span>
+                                把剛下載的 <code class="bg-orange-100 px-1.5 py-0.5 rounded text-teal-600 font-mono text-xs font-bold">.txt</code> 檔案上傳到 Google NotebookLM 作為來源。
+                                <span id="notebooklm-avatar-tip" class="hidden mt-2 text-teal-600 font-bold block bg-teal-50 p-2 rounded-lg border border-teal-200">⚠️ 提示：記得把你剛才下載的「主講者.pdf」也一起上傳喔！</span>
+                            </div>
+                            
+                            <div class="space-y-2.5">
+                                <div class="bg-white p-3.5 rounded-xl border border-orange-200 shadow-sm">
+                                    <div class="font-bold text-slate-800 mb-1 flex items-center justify-between">
+                                        <span>📝 15 頁以內（推薦做法）</span>
+                                        <span class="text-[10px] text-orange-600 font-normal">點擊複製</span>
+                                    </div>
+                                    <div id="notebooklm-prompt-normal" class="bg-orange-50/60 p-2.5 rounded-lg border border-orange-200 font-mono text-xs text-slate-800 select-all cursor-pointer hover:bg-orange-100/60 transition">
+                                        請完全按來源資料內容來生成簡報，不要加入新的內容
+                                    </div>
+                                </div>
+                                
+                                <div class="bg-white p-3.5 rounded-xl border border-orange-200 shadow-sm">
+                                    <div class="font-bold text-slate-800 mb-1">📚 超過 15 頁（進階做法）</div>
+                                    <p class="text-slate-500 text-xs mb-2">請分兩次點擊貼上指令：</p>
+                                    <div class="space-y-2">
+                                        <div>
+                                            <span class="text-[10px] bg-orange-200 text-orange-800 px-1.5 py-0.5 rounded font-bold">第一段</span>
+                                            <div id="notebooklm-prompt-split-1" class="bg-orange-50/60 p-2 rounded-lg border border-orange-200 font-mono text-xs text-slate-800 select-all cursor-pointer mt-1 hover:bg-orange-100/60 transition">
+                                                請完全按來源資料內容來生成簡報，不要加入新的內容，只生成前 10 頁
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <span class="text-[10px] bg-orange-200 text-orange-800 px-1.5 py-0.5 rounded font-bold">第二段</span>
+                                            <div id="notebooklm-prompt-split-2" class="bg-orange-50/60 p-2 rounded-lg border border-orange-200 font-mono text-xs text-slate-800 select-all cursor-pointer mt-1 hover:bg-orange-100/60 transition">
+                                                請完全按來源資料內容來生成簡報，不要加入新的內容，簡報從第 11 頁開始生成到最後
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 右側：大面積每頁 Slide 卡片清單 -->
+                <div id="slides-container" class="lg:col-span-8 space-y-6 pb-12">
+                    <!-- JS 動態插入大卡片 -->
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- 免 API 模式完整提示詞彈窗 -->
+    <div id="manual-prompt-modal" class="fixed inset-0 z-[60] hidden bg-slate-900/75 backdrop-blur-sm p-3 sm:p-6 items-center justify-center" role="dialog" aria-modal="true" aria-labelledby="manual-prompt-title">
+      <div class="bg-white rounded-3xl w-full max-w-4xl max-h-[95vh] flex flex-col shadow-2xl overflow-hidden">
+        <div class="p-4 sm:p-6 border-b flex items-center justify-between gap-3"><h2 id="manual-prompt-title" class="text-xl text-teal-900">📝 Gemini 簡報規劃提示詞</h2><button type="button" id="close-manual-prompt" class="p-2 rounded-xl bg-slate-100">✕ 關閉</button></div>
+        <p class="text-sm text-slate-700 px-5 pt-3">點擊「複製提示詞」，再開啟 Gemini 網頁貼上執行。若有上傳 PDF 或圖片，請在 Gemini 對話中另行附上原檔，本站不會自動傳送檔案。</p>
+        <textarea id="manual-prompt-output" readonly class="m-4 sm:m-5 mt-3 p-4 flex-1 min-h-[240px] border-2 border-teal-200 rounded-2xl text-sm bg-slate-50 leading-relaxed"></textarea>
+        <div class="px-5 pb-5 flex flex-wrap gap-3"><button type="button" id="copy-manual-prompt" class="px-5 py-3 rounded-xl text-white bg-teal-600 hover:bg-teal-700">📋 複製提示詞</button><a href="https://gemini.google.com/app" target="_blank" rel="noopener noreferrer" class="px-5 py-3 rounded-xl bg-indigo-100 text-indigo-800">🌐 開啟 Gemini 網頁 ↗</a><button type="button" id="download-manual-prompt" class="px-5 py-3 rounded-xl bg-orange-100 text-orange-900">💾 下載提示詞 TXT</button></div>
+      </div>
+    </div>
+    <!-- API Key Modal -->
+    <div id="api-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md p-6 sm:p-8 border border-orange-100">
+            <h3 class="text-lg font-bold text-slate-800 mb-2">設定 Google Gemini API Key</h3>
+            <p class="text-xs sm:text-sm text-slate-500 mb-5 leading-relaxed">此獨立網頁需要您自行輸入 Gemini API Key 才能呼叫 AI。金鑰僅保留在目前頁面記憶體中；公開部署時建議改用後端代理以保護金鑰。</p>
+            <input type="password" id="input-api-key" placeholder="請輸入您的 Gemini API Key (AIzaSy...)" class="w-full border border-slate-300 rounded-xl px-4 py-3 text-sm font-mono mb-5 focus:outline-none focus:ring-2 focus:ring-orange-300">
+            <div class="flex justify-end gap-3">
+                <button id="btn-close-modal" class="px-4 py-2 text-sm bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl transition font-bold">取消</button>
+                <button id="btn-save-modal" class="px-4 py-2 text-sm bg-orange-600 hover:bg-orange-700 text-white rounded-xl transition font-bold shadow-md">儲存設定</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 頁尾 -->
+    <footer class="bg-white/80 border-t border-teal-100 py-6 mt-auto">
+        <div class="max-w-[1400px] mx-auto px-4 sm:px-8 flex flex-col md:flex-row items-center justify-between text-xs sm:text-sm text-slate-500 gap-2">
+            <div>
+                ✨ 楊貴傑老師製作
+                <div class="ygj-revision-credit" style="margin-top:6px;font-size:12px;opacity:.8;">修改於阿剛老師</div>
+            </div>
+            <div>
+                本工具內容採用 <span class="font-semibold text-slate-700">創用 CC 姓名標示-非商業性 4.0 國際</span> 授權
+            </div>
+        </div>
+    </footer>
+
+    <!-- Toast 容器 -->
+    <div id="toast-container" class="fixed bottom-6 right-6 z-50 flex flex-col gap-2.5"></div>
+
+    <!-- 主要邏輯 JS -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- 狀態變數 ---
+            const apiKey = ""; // 獨立網頁不內建金鑰
+            let userApiKey = "";
+            let uploadedFileData = null;
+            let resultsData = [];
+            let currentTopic = "";
+            let currentGlobalStyle = "";
+            let activeStyleTab = 0;
+            let hasGenerated = false;
+
+            // --- DOM 綁定 ---
+            const styleTabsContainer = document.getElementById('style-tabs-container');
+            const styleButtonsContainer = document.getElementById('style-buttons-container');
+            
+            const btnApiModal = document.getElementById('btn-api-modal');
+            const apiModal = document.getElementById('api-modal');
+            const btnCloseModal = document.getElementById('btn-close-modal');
+            const btnSaveModal = document.getElementById('btn-save-modal');
+            const inputApiKey = document.getElementById('input-api-key');
+            
+            const toggleAvatar = document.getElementById('toggle-avatar');
+            const toggleAvatarBg = document.getElementById('toggle-avatar-bg');
+            const toggleAvatarDot = document.getElementById('toggle-avatar-dot');
+            const avatarSettings = document.getElementById('avatar-settings');
+
+            const containerAvatarA = document.getElementById('container-avatar-a');
+            const containerAvatarBC = document.getElementById('container-avatar-bc');
+            const badgeAvatarA = document.getElementById('badge-avatar-a');
+            const badgeAvatarB = document.getElementById('badge-avatar-b');
+            const badgeAvatarC = document.getElementById('badge-avatar-c');
+            const btnClearAvatarC = document.getElementById('btn-clear-avatar-c');
+
+            const inputAvatarName = document.getElementById('input-avatar-name');
+            const selectAvatarType = document.getElementById('select-avatar-type');
+            const avatarPromptArea = document.getElementById('avatar-prompt-area');
+            const avatarPromptText = document.getElementById('avatar-prompt-text');
+            const btnCopyAvatarPrompt = document.getElementById('btn-copy-avatar-prompt');
+            const fileAvatarUpload = document.getElementById('file-avatar-upload');
+            const avatarPdfStatus = document.getElementById('avatar-pdf-status');
+            
+            const inputPages = document.getElementById('input-pages');
+
+            // 語音輸入：繁體中文，支援兩個主要多行文字欄位。
+            (() => {
+                const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                const voiceButtons = [...document.querySelectorAll('[data-voice-target]')];
+                let recognition = null;
+                let activeButton = null;
+                let finalTranscript = "";
+                let originalValue = "";
+                let shouldRestart = false;
+
+                function show(button, message, listening = false) {
+                    const status = document.querySelector('[data-voice-status="' + button.dataset.voiceTarget + '"]');
+                    if (status) status.textContent = message;
+                    button.textContent = listening ? "⏹ 停止語音輸入" : "🎙️ 開始語音輸入";
+                    button.setAttribute('aria-pressed', String(listening));
+                    button.classList.toggle('ring-4', listening);
+                    button.classList.toggle('ring-red-200', listening);
+                }
+                if (!Recognition) {
+                    voiceButtons.forEach(button => {
+                        button.disabled = true;
+                        show(button, "此瀏覽器不支援語音辨識，請使用最新版 Chrome 或 Edge。");
+                    });
+                    return;
+                }
+                function stopCurrent() {
+                    shouldRestart = false;
+                    if (recognition) {
+                        try { recognition.stop(); } catch (_) {}
+                    }
+                }
+                voiceButtons.forEach(button => button.addEventListener('click', () => {
+                    if (activeButton === button) {
+                        stopCurrent();
+                        return;
+                    }
+                    if (activeButton) stopCurrent();
+                    const target = document.getElementById(button.dataset.voiceTarget);
+                    if (!target) return;
+                    activeButton = button;
+                    finalTranscript = "";
+                    originalValue = target.value.trimEnd();
+                    recognition = new Recognition();
+                    const current = recognition;
+                    current.lang = "zh-TW";
+                    current.continuous = true;
+                    current.interimResults = true;
+                    show(button, "正在聆聽…請開始說話。", true);
+                    current.onresult = event => {
+                        if (recognition !== current) return;
+                        let interim = "";
+                        for (let i = event.resultIndex; i < event.results.length; i++) {
+                            const content = event.results[i][0].transcript;
+                            if (event.results[i].isFinal) finalTranscript += content;
+                            else interim += content;
+                        }
+                        const separator = originalValue ? "\n" : "";
+                        target.value = originalValue + separator + finalTranscript + interim;
+                        target.dispatchEvent(new Event("input", { bubbles: true }));
+                        show(button, interim ? "辨識中，文字會自動填入…" : "正在聆聽…", true);
+                    };
+                    current.onerror = event => {
+                        if (recognition !== current) return;
+                        const descriptions = {
+                            "not-allowed": "麥克風權限被拒絕，請在瀏覽器設定允許使用。",
+                            "service-not-allowed": "語音辨識服務被瀏覽器封鎖。",
+                            "no-speech": "沒有偵測到語音，請靠近麥克風再試一次。",
+                            "audio-capture": "找不到可用的麥克風。",
+                            "network": "語音辨識網路連線失敗。",
+                            "language-not-supported": "瀏覽器不支援繁體中文語音辨識。"
+                        };
+                        show(button, descriptions[event.error] || "語音辨識失敗：" + event.error);
+                    };
+                    current.onend = () => {
+                        if (recognition !== current) return;
+                        show(button, "語音輸入已停止；可再次按下繼續追加文字。");
+                        activeButton = null;
+                        recognition = null;
+                    };
+                    try { current.start(); }
+                    catch (error) {
+                        show(button, "啟動失敗：" + error.message);
+                        activeButton = null;
+                        recognition = null;
+                    }
+                }));
+            })();
+
+            const inputTextContent = document.getElementById('input-text-content');
+            const fileMainUpload = document.getElementById('file-main-upload');
+            const mainFileStatus = document.getElementById('main-file-status');
+            const mainFileName = document.getElementById('main-file-name');
+            const btnRemoveMainFile = document.getElementById('btn-remove-main-file');
+            const toggleOriginalImageArea = document.getElementById('toggle-original-image-area');
+            const toggleOriginalImages = document.getElementById('toggle-original-images');
+            
+            const selectTheme = document.getElementById('select-theme');
+            const selectAudience = document.getElementById('select-audience');
+            const selectLayoutPref = document.getElementById('select-layout-pref');
+            const inputStyle = document.getElementById('input-style');
+            const quickBtns = document.querySelectorAll('.quick-btn');
+            
+            const btnGenerate = document.getElementById('btn-generate');
+            const generateText = document.getElementById('generate-text');
+            const generateLoader = document.getElementById('generate-loader');
+            const errorMessage = document.getElementById('error-message');
+            
+            const resultsModal = document.getElementById('results-modal');
+            const btnCloseResults = document.getElementById('btn-close-results');
+            const btnReopenResults = document.getElementById('btn-reopen-results');
+            
+            const btnCopyAll = document.getElementById('btn-copy-all');
+            const btnDownloadTxt = document.getElementById('btn-download-txt');
+            const btnDownloadPure = document.getElementById('btn-download-pure');
+            
+            const resultTopic = document.getElementById('result-topic');
+            const resultGlobalStyle = document.getElementById('result-global-style');
+            const slidesContainer = document.getElementById('slides-container');
+
+            // 50 種風格分類
+            const presetStyleCategories = [
+                {
+                    name: "商業與科技",
+                    styles: [
+                        { label: "現代極簡 (Minimalist)", detail: "乾淨的大面積留白、無襯線字體、莫蘭迪色系，強調視覺呼吸感與極簡排版。" },
+                        { label: "科技未來 (Futuristic)", detail: "深色背景搭配螢光藍/紫線條、發光元素、數位電路紋理與科技感字體。" },
+                        { label: "數據專業 (Data-Driven)", detail: "嚴謹的網格系統、高對比配色、強調精緻的數據視覺化圖表與資訊層級。" },
+                        { label: "賽博龐克 (Cyberpunk)", detail: "高飽和霓虹色彩、故障藝術(Glitch)效果、繁華都市感與數位破碎視覺。" },
+                        { label: "金融嚴謹 (Finance)", detail: "深藍色與金色搭配、經典襯線體、穩定對稱的構圖，傳達信任與權威感。" },
+                        { label: "扁平化設計 (Flat UI)", detail: "明亮的幾何色塊、無陰影設計、直觀的圖標排版，強調易讀性與效率。" },
+                        { label: "蘋果美學 (Apple Style)", detail: "極致簡約、柔和灰度、強調產品攝影質感與流暢的動態排版。" },
+                        { label: "暗黑模式 (Dark Mode)", detail: "深灰至純黑背景、強調發光文字與光感層次，適合前衛或程式主題。" },
+                        { label: "綠色ESG永續 (Eco-ESG)", detail: "清新翠綠、無襯線字體、自然留白，強調環保、社會責任與永續發展。" },
+                        { label: "AI智慧未來 (AI & Machine)", detail: "炫彩極光、神經網路紋理、微發光動態框架，充滿先進演算法與智慧感。" }
+                    ]
+                },
+                {
+                    name: "經典與溫馨",
+                    styles: [
+                        { label: "莫蘭迪色 (Morandi)", detail: "低彩度灰階色調、視覺上極其舒適與緩和，呈現高雅且沈穩的排版。" },
+                        { label: "溫慢療癒 (Healing)", detail: "柔和的大地色調、手繪植物元素、輕盈的排版節奏，強調親和力。" },
+                        { label: "自然有機 (Organic)", detail: "綠色系配色、有機形狀（如卵石）、模擬自然光影與植物脈絡視覺。" },
+                        { label: "北歐風格 (Nordic)", detail: "原木配色、灰白基礎色、清新通透的空間感與功能性排版。" },
+                        { label: "簡約雜誌 (Editorial)", detail: "高雅的襯線字體組合、大幅跨頁照片、詩意的留白，強調故事感。" },
+                        { label: "文青風格 (Vibe)", detail: "低飽和攝影圖片、微小的文字標題、強調生活感與細膩的情緒表達。" },
+                        { label: "手作水彩 (Watercolor)", detail: "透明清新的水彩暈染效果，邊緣自然過渡，搭配輕盈筆觸與大面積留白。" },
+                        { label: "復古羊皮紙 (Parchment)", detail: "溫潤微黃紙質、典雅墨黑襯線體、細緻古典花邊，充滿人文氣息。" },
+                        { label: "日式無印風 (Muji Style)", detail: "原木色調、輕柔白棉布質感、沈穩排版，營造極致和諧、內斂與自然舒適日常。" },
+                        { label: "禪意手繪 (Zen)", detail: "單色細線條、極致簡單的構圖、強調禪意與內斂的藝術表達。" }
+                    ]
+                },
+                {
+                    name: "創意與實驗",
+                    styles: [
+                        { label: "包浩斯 (Bauhaus)", detail: "強烈的幾何結構、紅黃藍三原色應用、強調功能性與實驗性排版。" },
+                        { label: "孟菲斯 (Memphis)", detail: "繽紛幾何碎塊、波浪線條、充滿活力的色彩與不規則圖案堆疊。" },
+                        { label: "拼貼藝術 (Collage)", detail: "剪報質感、重疊的圖文物件。" },
+                        { label: "故障藝術 (Glitch Art)", detail: "錯位的色相、掃描線效果、數位破碎感與強烈的動態視覺。" },
+                        { label: "瑞士風格 (Swiss)", detail: "絕對嚴謹的網格排版、巨大的無襯線標題、強烈非對稱平衡感。" },
+                        { label: "玻璃擬態 (Glass)", detail: "背景模糊透明效果(Frosted Glass)、輕盈層次感，強調深度與光影。" },
+                        { label: "擬態化 (Neumorphism)", detail: "利用軟陰影營造按鈕與卡片的深度感，呈現出如實體按鍵的層次。" },
+                        { label: "酸性設計 (Acid Graphics)", detail: "高飽和螢光色、流動的液態金屬質感、扭曲誇張的字體與密集排版。" },
+                        { label: "蒸氣波 (Vaporwave)", detail: "柔和粉紫色調、古希臘雕像、椰子樹與早期網際網路迷幻元素。" },
+                        { label: "野獸派 (Brutalism)", detail: "大膽不羈、未加工感、巨大的粗體標題、不規整且具侵略性的排版。" }
+                    ]
+                },
+                {
+                    name: "繪本與童趣",
+                    styles: [
+                        { label: "溫馨童話 (Fairy Tale)", detail: "暖色手繪彩色鉛筆質感、柔和暖粉色調、夢幻且帶有感性的森林童話故事氛圍。" },
+                        { label: "立體剪紙 (Paper Cutout)", detail: "多層次堆疊的彩色卡紙質感、帶有柔和陰影的立體視覺、充滿手工溫度的排版。" },
+                        { label: "黏土格拍 (Claymation)", detail: "模擬真實黏土捏造的立體質感、圓潤可愛的物件，色彩高飽和且充滿生動童趣感。" },
+                        { label: "粉彩蠟筆 (Crayon Art)", detail: "充滿童趣的兒童塗鴉風格，粗糙的粉彩蠟筆筆觸，色彩鮮明活潑。" },
+                        { label: "森林系布偶 (Sylvanian Plush)", detail: "溫暖絨毛觸感、大地綠與暖木配色、柔焦自然光影，呈現極具安全感的故事風格。" },
+                        { label: "奇幻星空 (Dreamy Starry)", detail: "迷幻深藍渲染、細緻手繪燙金線條、螢光水波墨水，營造浪漫無垠的夜空。" },
+                        { label: "北歐插畫 (Nordic Folk)", detail: "簡練幾何動植物、高對比原色色塊、質樸手感編織纹理。" },
+                        { label: "復古蝕刻 (Vintage Etching)", detail: "細緻古典鋼筆排線、淡雅單色水彩淡著色、復古手寫體。" },
+                        { label: "東方水墨 (Ink Whimsy)", detail: "靈動水墨暈染、俏皮隨性留白、極簡寫意線條動物。" },
+                        { label: "隨性塗鴉 (Doodle Play)", detail: "隨性炭筆線條、高彩度溢出著色、無邊界排版，展現不受拘束的無限想像力。" }
+                    ]
+                },
+                {
+                    name: "漫畫與分鏡",
+                    styles: [
+                        { label: "漫畫對話 (Comic Style)", detail: "鮮明的網點背景、逗趣對白框排版、放射狀集中線，以漫畫分鏡的方式呈現內容。" },
+                        { label: "像素冒險 (Pixel Game)", detail: "復古 8-bit 遊戲風格，點陣圖案搭配對話任務視窗排版。" },
+                        { label: "熱血少年漫 (Shonen Manga)", detail: "粗獷黑白墨線、強烈速度運動線、黑白網點背景，充滿張力。" },
+                        { label: "復古美漫 (Retro Comic)", detail: "半色調點陣 (Halftone)、大膽黑線描邊、高對比波普互補色。" },
+                        { label: "輕小說動漫 (Light Novel)", detail: "精緻日系賽璐璐上色、逆光溫暖光斑、透亮眼眸描繪。" },
+                        { label: "Q版四格 (Yonkoma Comic)", detail: "整齊等分方格、Q版兩頭身娃娃、誇張表情符號與汗滴標註。" },
+                        { label: "狂放水墨武俠 (Wuxia Ink)", detail: "寫意且剛勁的手繪水墨筆觸、煙霧繚繞背景、行楷書法字體。" },
+                        { label: "經典歐漫 (Franco-Belgian BD)", detail: "勻稱細黑鋼筆描邊 (Ligne Claire)、溫和寫實水彩著色。" },
+                        { label: "科幻機甲 (Mecha Sci-Fi)", detail: "金屬磨損質感、極光抬頭顯示器 (HUD) 邊框、冷冽幽藍光源。" },
+                        { label: "Webtoon條漫 (Modern Webtoon)", detail: "適合直式閱讀的流暢無框排版、柔和微發光特效、當代都會流行穿搭。" }
+                    ]
+                }
+            ];
+
+            // 15 種主講畫風 Prompt
+            const avatarPrompts = {
+                "專業商務似顏繪": "A professional business portrait caricature. Highly realistic but stylized, wearing modern smart casual or business attire. The character must strictly maintain the facial features, likeness, and body proportions of the person in the reference photo.",
+                "Q版立體似顏繪": "A cute 3D chibi style caricature. Big expressive eyes, friendly smile, octane render, soft lighting. The character must maintain the distinct facial characteristics and general likeness of the person in the reference photo.",
+                "日系動漫似顏繪": "An anime style portrait, Studio Ghibli inspired. Vibrant colors, detailed expressive eyes. The character must closely resemble the facial structure and body type of the person in the reference photo.",
+                "藝術水彩似顏繪": "A watercolor illustration style portrait. Fluid brush strokes, ethereal and elegant. The artwork must highly capture the likeness, facial features, and body silhouette of the person in the reference photo.",
+                "歐美漫畫似顏繪": "A western comic book style caricature. Bold ink lines, dynamic shading, pop art colors. The character must strictly maintain the facial features and likeness of the real person in the reference photo.",
+                "簡約線條似顏繪": "A minimalist continuous line art style portrait. Simple black lines, elegant and modern. The line art must accurately outline the unique facial features and body shape of the person in the reference photo.",
+                "像素藝術似顏繪": "A 16-bit pixel art style character portrait. Retro gaming aesthetic. Despite the pixelation, it must strongly resemble the facial features and body proportions of the person in the reference photo.",
+                "黏土人偶似顏繪": "A claymation style character. Stop motion aesthetic, textured clay material. The doll must accurately reflect the specific facial features, hairstyle, and body type of the real person in the reference photo.",
+                "賽博龐克似顏繪": "A cyberpunk style avatar. Neon glowing accents, futuristic tech wear. The character's face and body proportions must be highly recognizable as the person in the reference photo.",
+                "復古普普似顏繪": "A retro pop art Andy Warhol style portrait. High contrast, halftone dots, vibrant complementary colors. The face and silhouette must exactly match the person in the reference photo.",
+                "潮流盲盒公仔": "A trendy Pop Mart blind box toy style caricature. Glossy plastic material, smooth and rounded edges, big cute eyes, adorable posture. The doll must accurately reflect the specific facial features and body proportions of the real person in the reference photo.",
+                "毛線羊毛氈風": "A cute amigurumi wool felt style caricature. Soft, fuzzy texture, plush toy aesthetic, warm lighting. The character must strictly maintain the distinct facial characteristics, likeness, and body type of the person in the reference photo.",
+                "溫馨童話繪本": "A cute children's picture book illustration style portrait. Soft pastel colors, warm and whimsical, hand-drawn colored pencil texture. The character must highly resemble the facial structure and body silhouette of the real person in the reference photo.",
+                "活潑扁平卡通": "A cute and lively modern 2D flat vector cartoon caricature. Clean lines, bright vibrant solid colors, expressive and fun. The character must strictly maintain the facial features and likeness of the real person in the reference photo.",
+                "森林系布偶風": "A cute Sylvanian Families inspired flocked doll caricature. Soft velvety texture, adorable rounded features, wearing tiny cute clothes. The character's core facial identity and body shape must closely match the person in the reference photo."
+            };
+
+            // 渲染風格庫
+            function renderStyleLibrary() {
+                if (!styleTabsContainer || !styleButtonsContainer) return;
+                styleTabsContainer.innerHTML = '';
+                presetStyleCategories.forEach((category, index) => {
+                    const tabBtn = document.createElement('button');
+                    tabBtn.type = 'button';
+                    tabBtn.innerText = category.name;
+                    
+                    if (index === activeStyleTab) {
+                        tabBtn.className = 'px-4 py-2 bg-orange-600 text-white font-bold rounded-xl text-xs sm:text-sm transition shadow-sm';
+                    } else {
+                        tabBtn.className = 'px-4 py-2 bg-orange-50 hover:bg-orange-100 text-orange-800 rounded-xl text-xs sm:text-sm transition font-semibold border border-orange-200';
+                    }
+
+                    tabBtn.addEventListener('click', () => {
+                        activeStyleTab = index;
+                        renderStyleLibrary();
+                    });
+                    styleTabsContainer.appendChild(tabBtn);
+                });
+
+                styleButtonsContainer.innerHTML = '';
+                const activeCategory = presetStyleCategories[activeStyleTab];
+                if (activeCategory && activeCategory.styles) {
+                    activeCategory.styles.forEach(style => {
+                        const styleBtn = document.createElement('button');
+                        styleBtn.type = 'button';
+                        styleBtn.className = 'text-left p-3 border border-orange-100 rounded-xl bg-gradient-to-b from-white to-orange-50/30 hover:to-orange-100/50 hover:border-orange-300 transition shadow-sm flex flex-col justify-between';
+                        styleBtn.innerHTML = `
+                            <div class="text-xs sm:text-sm font-bold text-slate-800 leading-snug mb-1">${style.label}</div>
+                            <div class="text-xs text-slate-500 line-clamp-2 leading-relaxed">${style.detail}</div>
+                        `;
+                        styleBtn.addEventListener('click', () => {
+                            const desc = `【${style.label}】\n${style.detail}`;
+                            if (inputStyle) inputStyle.value = desc;
+                            showToast(`已載入風格打底：${style.label}`);
+                        });
+                        styleButtonsContainer.appendChild(styleBtn);
+                    });
+                }
+            }
+
+            renderStyleLibrary();
+
+            // Modal Controls
+            btnApiModal?.addEventListener('click', () => { if (inputApiKey) inputApiKey.value = userApiKey; apiModal?.classList.remove('hidden'); apiModal?.classList.add('flex'); });
+            btnCloseModal?.addEventListener('click', () => { apiModal?.classList.add('hidden'); apiModal?.classList.remove('flex'); });
+            btnSaveModal?.addEventListener('click', () => { userApiKey = inputApiKey ? inputApiKey.value.trim() : ""; apiModal?.classList.add('hidden'); apiModal?.classList.remove('flex'); showToast("API Key 已套用至本次頁面"); });
+
+            // Copy Prompt Helpers for NotebookLM
+            const bindPromptClickToCopy = (element) => {
+                if (!element) return;
+                element.addEventListener('click', () => {
+                    const textToCopy = element.innerText.trim();
+                    try {
+                        const tempTextArea = document.createElement("textarea");
+                        tempTextArea.value = textToCopy;
+                        tempTextArea.style.position = "fixed";
+                        tempTextArea.style.left = "-999999px";
+                        document.body.appendChild(tempTextArea);
+                        tempTextArea.select();
+                        document.execCommand('copy');
+                        document.body.removeChild(tempTextArea);
+                        showToast("📋 指令已成功複製！");
+                    } catch (err) {
+                        showToast("複製失敗，請手動複製。", "error");
+                    }
+                });
+            };
+
+            bindPromptClickToCopy(document.getElementById('notebooklm-prompt-normal'));
+            bindPromptClickToCopy(document.getElementById('notebooklm-prompt-split-1'));
+            bindPromptClickToCopy(document.getElementById('notebooklm-prompt-split-2'));
+
+            // Avatar Toggle
+            toggleAvatar?.addEventListener('change', (e) => {
+                if (e.target.checked) {
+                    toggleAvatarBg?.classList.replace('bg-slate-200', 'bg-teal-500');
+                    toggleAvatarDot?.classList.add('translate-x-6');
+                    avatarSettings?.classList.remove('hidden');
+                } else {
+                    toggleAvatarBg?.classList.replace('bg-teal-500', 'bg-slate-200');
+                    toggleAvatarDot?.classList.remove('translate-x-6');
+                    avatarSettings?.classList.add('hidden');
+                    // 重設全部人像設定
+                    if (inputAvatarName) inputAvatarName.value = '';
+                    if (selectAvatarType) selectAvatarType.value = '';
+                    if (fileAvatarUpload) fileAvatarUpload.value = '';
+                    avatarPromptArea?.classList.add('hidden');
+                    avatarPdfStatus?.classList.add('hidden');
+                    updateAvatarModeState();
+                }
+            });
+
+            // 互斥狀態控制邏輯 (方案 A 與 方案 B/C 互斥)
+            function updateAvatarModeState() {
+                const hasA = inputAvatarName ? inputAvatarName.value.trim().length > 0 : false;
+                const hasB = selectAvatarType ? selectAvatarType.value.trim().length > 0 : false;
+                const hasC = fileAvatarUpload?.files && fileAvatarUpload.files.length > 0;
+
+                if (hasA) {
+                    // 方案 A 啟用 -> 停用 B 與 C
+                    containerAvatarBC?.classList.add('opacity-40', 'pointer-events-none');
+                    if (selectAvatarType) { selectAvatarType.disabled = true; selectAvatarType.value = ""; }
+                    if (fileAvatarUpload) fileAvatarUpload.disabled = true;
+
+                    avatarPromptArea?.classList.add('hidden');
+                    if (avatarPromptText) avatarPromptText.value = "";
+
+                    containerAvatarA?.classList.remove('opacity-40', 'pointer-events-none');
+                    if (inputAvatarName) inputAvatarName.disabled = false;
+
+                    badgeAvatarA?.classList.remove('hidden');
+                    badgeAvatarB?.classList.add('hidden');
+                    badgeAvatarC?.classList.add('hidden');
+                } else if (hasB || hasC) {
+                    // 方案 B 或 C 啟用 -> 停用 A
+                    containerAvatarA?.classList.add('opacity-40', 'pointer-events-none');
+                    if (inputAvatarName) { inputAvatarName.disabled = true; inputAvatarName.value = ""; }
+
+                    containerAvatarBC?.classList.remove('opacity-40', 'pointer-events-none');
+                    if (selectAvatarType) selectAvatarType.disabled = false;
+                    if (fileAvatarUpload) fileAvatarUpload.disabled = false;
+
+                    badgeAvatarA?.classList.add('hidden');
+                    if (hasB) badgeAvatarB?.classList.remove('hidden'); else badgeAvatarB?.classList.add('hidden');
+                    if (hasC) badgeAvatarC?.classList.remove('hidden'); else badgeAvatarC?.classList.add('hidden');
+                } else {
+                    // 未選擇任何方案 -> 全部解鎖
+                    containerAvatarA?.classList.remove('opacity-40', 'pointer-events-none');
+                    containerAvatarBC?.classList.remove('opacity-40', 'pointer-events-none');
+                    if (inputAvatarName) inputAvatarName.disabled = false;
+                    if (selectAvatarType) selectAvatarType.disabled = false;
+                    if (fileAvatarUpload) fileAvatarUpload.disabled = false;
+
+                    badgeAvatarA?.classList.add('hidden');
+                    badgeAvatarB?.classList.add('hidden');
+                    badgeAvatarC?.classList.add('hidden');
+                }
+            }
+
+            inputAvatarName?.addEventListener('input', updateAvatarModeState);
+
+            selectAvatarType?.addEventListener('change', (e) => {
+                const val = e.target.value;
+                const subjectText = "the person in the attached reference photo";
+                if (val && avatarPrompts[val]) {
+                    const prompt = `Create a full-body character portrait of ${subjectText} (strictly maintain their unique facial features, likeness, and body proportions). Style/Type: ${avatarPrompts[val]}. The character should be acting as a presenter, standing in a neutral pose, looking directly at the camera. Clean solid white background, high resolution, highly detailed.`;
+                    if (avatarPromptText) avatarPromptText.value = prompt;
+                    avatarPromptArea?.classList.remove('hidden');
+                } else {
+                    avatarPromptArea?.classList.add('hidden');
+                    if (avatarPromptText) avatarPromptText.value = '';
+                }
+                updateAvatarModeState();
+            });
+
+            btnClearAvatarC?.addEventListener('click', () => {
+                if (fileAvatarUpload) fileAvatarUpload.value = '';
+                avatarPdfStatus?.classList.add('hidden');
+                updateAvatarModeState();
+                showToast("已移除方案 C 的圖片檔案");
+            });
+
+            btnCopyAvatarPrompt?.addEventListener('click', () => {
+                if (!avatarPromptText?.value) return;
+                try {
+                    const tempTextArea = document.createElement("textarea");
+                    tempTextArea.value = avatarPromptText.value;
+                    tempTextArea.style.position = "fixed";
+                    tempTextArea.style.left = "-999999px";
+                    document.body.appendChild(tempTextArea);
+                    tempTextArea.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(tempTextArea);
+                    showToast("📋 似顏繪提示詞複製成功！");
+                } catch(e) {
+                    showToast("複製失敗，請手動複製。", "error");
+                }
+            });
+
+            // Avatar PDF Rotated Download
+            fileAvatarUpload?.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (!file || !file.type.startsWith('image/')) return;
+                
+                updateAvatarModeState();
+
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        try {
+                            const canvas = document.createElement('canvas');
+                            canvas.width = img.height; canvas.height = img.width;
+                            const ctx = canvas.getContext('2d');
+                            ctx.translate(canvas.width / 2, canvas.height / 2);
+                            ctx.rotate(-90 * Math.PI / 180);
+                            ctx.drawImage(img, -img.width / 2, -img.height / 2);
+                            const rotatedDataUrl = canvas.toDataURL('image/jpeg', 1.0);
+                            
+                            const { jsPDF } = window.jspdf;
+                            const doc = new jsPDF({ orientation: canvas.width > canvas.height ? 'l' : 'p', unit: 'px', format: [canvas.width, canvas.height] });
+                            doc.addImage(rotatedDataUrl, 'JPEG', 0, 0, canvas.width, canvas.height);
+                            doc.save('主講者.pdf');
+                            avatarPdfStatus?.classList.remove('hidden');
+                            showToast("主講者.pdf 下載成功！");
+                        } catch (err) {
+                            showToast("PDF 生成失敗，請檢查檔案。", "error");
+                        }
+                    };
+                    img.src = event.target.result;
+                };
+                reader.readAsDataURL(file);
+            });
+
+            // Main File Upload
+            fileMainUpload?.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                const isValidType = file.type.startsWith('image/') || file.type === 'application/pdf';
+                if (!isValidType) { showToast("僅支援圖片或 PDF！", "error"); return; }
+                
+                const reader = new FileReader();
+                reader.onloadend = () => {
+                    uploadedFileData = {
+                        mimeType: file.type,
+                        data: reader.result.split(',')[1],
+                        name: file.name
+                    };
+                    if (mainFileName) mainFileName.innerText = file.name;
+                    mainFileStatus?.classList.remove('hidden');
+                    toggleOriginalImageArea?.classList.remove('hidden');
+                    showToast("檔案載入成功！");
+                };
+                reader.readAsDataURL(file);
+            });
+
+            btnRemoveMainFile?.addEventListener('click', () => {
+                uploadedFileData = null;
+                if (fileMainUpload) fileMainUpload.value = '';
+                mainFileStatus?.classList.add('hidden');
+                toggleOriginalImageArea?.classList.add('hidden');
+                if (toggleOriginalImages) toggleOriginalImages.checked = false;
+                showToast("已移除參考檔案。");
+            });
+
+            // Quick mode buttons logic
+            quickBtns.forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const text = e.target.getAttribute('data-text');
+                    const currentVal = inputStyle ? inputStyle.value.trim() : "";
+                    if (!currentVal) {
+                        showToast("💡 溫馨提醒：建議先點選上方「50種風格」打底，再點選快速風格喔！", "warning");
+                    } else {
+                        showToast("快捷模式指令已疊加！");
+                    }
+                    if (inputStyle) inputStyle.value = currentVal ? `${currentVal}\n${text}` : text;
+                });
+            });
+
+            // --- 串接 Google Gemini API ---
+            // 免 API Key 模式：依現有表單建立逐頁規劃指令，而不是假裝已完成 AI 生成。
+            const generationModes = document.querySelectorAll('input[name="generation-mode"]');
+            const manualPromptModal = document.getElementById('manual-prompt-modal');
+            const manualPromptOutput = document.getElementById('manual-prompt-output');
+            const modeHint = document.getElementById('generation-mode-hint');
+            function generationMode() { return document.querySelector('input[name="generation-mode"]:checked')?.value || 'manual'; }
+            function updateModeUI() {
+                const manual = generationMode() === 'manual';
+                if (generateText) generateText.textContent = manual ? '📝 產生提示詞（免 API Key）' : '✨ 開始生成簡報規劃（Gemini API）';
+                if (modeHint) modeHint.textContent = manual ? '免 API 模式不會在本站直接呼叫 AI；請複製提示詞到 Gemini 網頁貼上執行。' : '此模式需要 Google 專案具備 Gemini API 存取權限與有效 API Key。';
+            }
+            generationModes.forEach(radio => radio.addEventListener('change', updateModeUI));
+            updateModeUI();
+            function manualPromptText() {
+                const num = Math.max(1, Math.min(30, Number(inputPages?.value) || 10));
+                const avatarEnabled = !!toggleAvatar?.checked;
+                const avatarDescription = inputAvatarName?.value.trim() || selectAvatarType?.value || (fileAvatarUpload?.files?.[0] ? '依照另附的主講者參考圖片設計' : '固定一致的主講者角色');
+                const content = inputTextContent?.value.trim() || '（請根據另外上傳的參考資料分析內容）';
+                const file = fileMainUpload?.files?.[0];
+                return `你是資深簡報策展人、內容編輯與視覺設計專家。請依以下資料，產出完整且可直接用於製作簡報的「逐頁規劃」。請使用繁體中文，不要只給大綱。
+
+【簡報規格】
+頁數：${num} 頁（必須完整輸出第 1 至第 ${num} 頁，不可省略）
+主軸：${selectTheme?.value || '依內容決定'}
+對象：${selectAudience?.value || '一般聽眾，依內容調整'}
+排版偏好：${selectLayoutPref?.value || '依各頁內容安排'}
+視覺風格與自訂要求：${inputStyle?.value.trim() || '清晰、專業、圖文平衡，整體風格一致'}
+${avatarEnabled ? '主講者設定：每頁都安排「' + avatarDescription + '」登場，保持形象一致。' : '不強制加入主講者角色。'}
+${toggleOriginalImages?.checked ? '保留原始附件的關鍵照片、圖表與數據，勿任意改寫。' : ''}
+
+【使用者提供的內容】
+${content}
+${file ? '\n【附件提醒】我會另外在 Gemini 對話中上傳原始檔案：' + file.name + '。請一起參考該附件。' : ''}
+${fileAvatarUpload?.files?.[0] ? '\n【角色附件提醒】我會另行上傳主講者參考圖片：' + fileAvatarUpload.files[0].name + '。' : ''}
+
+【輸出規則】
+1. 先提出總題目、受眾目標、敘事主線、統一視覺配色及版型原則。
+2. 按順序產生恰好 ${num} 頁。每頁必須包含：頁碼、頁面標題、可直接貼上的完整簡報文字、精細的畫面排版指南、建議的視覺素材，以及可給生圖工具使用的英文提示詞。
+3. 每頁要有不同的內容重點，避免重複；不得虛構統計或來源。資訊不足時請標示需確認。
+4. 若內容來自上傳資料，請以來源為優先，不擅自增刪重要事實。
+5. 如果單次輸出長度不足，請分批繼續，維持頁碼連續，直到第 ${num} 頁完成。
+6. 最後附上整份簡報的檢查清單。
+
+請開始。`;
+            }
+            function closeManual() { manualPromptModal?.classList.add('hidden'); manualPromptModal?.classList.remove('flex'); }
+            document.getElementById('close-manual-prompt')?.addEventListener('click', closeManual);
+            manualPromptModal?.addEventListener('click', e => { if (e.target === manualPromptModal) closeManual(); });
+            document.getElementById('copy-manual-prompt')?.addEventListener('click', async () => {
+                manualPromptOutput.select();
+                try { await navigator.clipboard.writeText(manualPromptOutput.value); showToast('已複製提示詞，請貼到 Gemini 網頁。'); }
+                catch (_) { const copied = document.execCommand('copy'); showToast(copied ? '已複製提示詞！' : '請手動選取文字複製。', copied ? 'success' : 'error'); }
+            });
+            document.getElementById('download-manual-prompt')?.addEventListener('click', () => {
+                const blob = new Blob([manualPromptOutput.value], {type:'text/plain;charset=utf-8'});
+                const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href=url; a.download='簡報設計王_Gemini提示詞.txt'; a.click(); setTimeout(() => URL.revokeObjectURL(url), 1500);
+            });
+
+            btnGenerate?.addEventListener('click', async () => {
+                const textContent = inputTextContent ? inputTextContent.value.trim() : "";
+                if (!textContent && !uploadedFileData) {
+                    showToast('請至少輸入文本內容或上傳參考檔案！', 'error');
+                    return;
+                }
+
+                if (generationMode() === 'manual') {
+                    manualPromptOutput.value = manualPromptText();
+                    manualPromptModal?.classList.remove('hidden');
+                    manualPromptModal?.classList.add('flex');
+                    return;
+                }
+
+                btnGenerate.disabled = true;
+                btnGenerate.classList.add('opacity-80', 'cursor-not-allowed');
+                if (generateText) generateText.innerText = "正在分析內容與設計簡報視效...";
+                generateLoader?.classList.remove('hidden');
+                errorMessage?.classList.add('hidden');
+
+                const pages = inputPages ? inputPages.value : 10;
+                const theme = selectTheme ? selectTheme.value : "";
+                const audience = selectAudience ? selectAudience.value : "";
+                const layoutPref = selectLayoutPref ? selectLayoutPref.value : "";
+                const style = inputStyle ? inputStyle.value : "";
+                const isAvatar = toggleAvatar ? toggleAvatar.checked : false;
+                const avatarName = inputAvatarName?.value.trim() || "";
+                const useOriginal = toggleOriginalImages ? toggleOriginalImages.checked : false;
+
+                let avatarInstruction = "";
+                if (isAvatar) {
+                    const characterLabel = avatarName ? `「${avatarName}」` : "主講者";
+                    avatarInstruction = `
+**【極度重要：綁定主講角色設定】**
+使用者已啟用「人像主講」功能。
+角色名稱/設定：${avatarName ? `【${avatarName}】` : '預設角色主講者'}。
+1. 只要在 \`layout\` 或 \`imagePrompt\` 中提到主講者角色，務必寫成「${characterLabel}」。
+2. 在 \`globalStyle\` 中，必須直接加上：「${characterLabel} 每一頁都會以動態姿態及配合內容加上合適的道具配件參與其中，不要改動原始視覺設定。」
+3. 每一頁的 \`layout\` 與 \`imagePrompt\` 都必須安排 ${characterLabel} 出現。`;
+                }
+
+                let originalImgInstruction = "";
+                if (useOriginal && uploadedFileData) {
+                    originalImgInstruction = `
+**【特殊排版指令：使用來源文件中的原始圖片】**
+使用者已啟用「保留原件圖片排版」。請分析上傳檔案，辨識重要圖片。在 \`layout\` 中，盡量明確指示「放置原始檔案中的圖片」(例如：排版置中顯示【來源文件中的數據圖】)。`;
+                }
+
+                const systemPrompt = `你現在是「AI 簡報內容與排版專家」。任務是根據輸入，自動歸納簡報主題，並創造結構清晰的排版指南。
+${avatarInstruction}
+${originalImgInstruction}
+**輸出格式要求(嚴格為JSON物件)：**
+{
+  "topic": "生成的簡報主題",
+  "globalStyle": "整體一致性風格描述",
+  "slides": [
+    {
+      "page": 1,
+      "title": "頁面標題",
+      "content": "本頁內容(需完整呈現欲放上簡報的實際文字)",
+      "layout": "排版指南(詳細說明位置。請註明：依照『本頁內容』填入區塊勿自行增減文字)",
+      "imagePrompt": "AI生圖提示詞(英文)"
+    }
+  ]
+}
+**條件設定：** 總頁數：${pages}。主軸：${theme || '依內容決定'}。對象：${audience || '依內容決定'}。排版偏好：${layoutPref || '由程式依內容決定'}。附加指令：${style}`;
+
+                const userMessage = `文本內容：${textContent}\n${uploadedFileData ? `(附帶檔案：${uploadedFileData.name})` : ""}\n請分析並生成規劃。`;
+
+                try {
+                    const contentsParts = [{ text: userMessage }];
+                    if (uploadedFileData) {
+                        contentsParts.push({ inlineData: { mimeType: uploadedFileData.mimeType, data: uploadedFileData.data } });
+                    }
+
+                    const payload = {
+                        contents: [{ role: "user", parts: contentsParts }],
+                        systemInstruction: { parts: [{ text: systemPrompt }] },
+                        generationConfig: { responseMimeType: "application/json" }
+                    };
+
+                    const keyToUse = (userApiKey && userApiKey.trim() !== '') ? userApiKey.trim() : apiKey;
+                    if (!keyToUse) {
+                        throw new Error("請先按右上角「設定 API Key」，輸入有效的 Gemini API Key。");
+                    }
+                    const fetchUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${encodeURIComponent(keyToUse)}`;
+
+                    const response = await fetch(fetchUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    if (!response.ok) {
+                        const errData = await response.json().catch(() => ({}));
+                        throw new Error(errData.error?.message || `HTTP 狀態碼 ${response.status}`);
+                    }
+
+                    const data = await response.json();
+                    if (!data.candidates?.[0]?.content) throw new Error("AI 回傳格式異常");
+
+                    let cleanText = data.candidates[0].content.parts[0].text;
+                    cleanText = cleanText.replace(/```json/g, '').replace(/```/g, '').trim();
+                    const parsedData = JSON.parse(cleanText);
+
+                    // 記錄資料
+                    currentTopic = parsedData.topic || "AI 生成主題";
+                    currentGlobalStyle = parsedData.globalStyle || "未指定特定風格";
+                    resultsData = parsedData.slides || [];
+                    hasGenerated = true;
+
+                    // 啟用「檢視簡報規劃全畫面」按鈕
+                    enableReopenButton();
+
+                    // 顯示結果 modal
+                    renderResultsModal();
+                    openResultsModal();
+                    showToast("✨ 簡報規劃已生成並以全畫面呈現！");
+
+                } catch (err) {
+                    if (errorMessage) {
+                        errorMessage.innerText = "生成失敗: " + err.message + " (請確認 API Key 是否設定正確，或者網路與檔案大小規格)";
+                        errorMessage.classList.remove('hidden');
+                    }
+                    showToast("生成失敗，請檢查設定。", "error");
+                } finally {
+                    btnGenerate.disabled = false;
+                    btnGenerate.classList.remove('opacity-80', 'cursor-not-allowed');
+                    if (generateText) {
+                        generateText.innerText = hasGenerated 
+                            ? "✨ 再次生成簡報規劃 (開啟全畫面展演圖層)" 
+                            : "✨ 開始生成簡報規劃 (開啟全畫面展演圖層)";
+                    }
+                    generateLoader?.classList.add('hidden');
+                }
+            });
+
+            // 啟用檢視按鈕
+            function enableReopenButton() {
+                if (!btnReopenResults) return;
+                btnReopenResults.disabled = false;
+                btnReopenResults.className = "btn-glow w-full bg-gradient-to-r from-orange-500 to-yellow-500 hover:from-orange-600 hover:to-yellow-600 text-white font-black py-4 px-6 rounded-2xl shadow-lg transition-all flex items-center justify-center text-base sm:text-lg tracking-wider cursor-pointer";
+            }
+
+            // --- 渲染與控制全畫面 Modal ---
+            function renderResultsModal() {
+                if (resultTopic) resultTopic.innerText = currentTopic;
+                if (resultGlobalStyle) resultGlobalStyle.innerText = currentGlobalStyle;
+
+                const isAvatar = toggleAvatar ? toggleAvatar.checked : false;
+                const avatarName = inputAvatarName?.value.trim() || "";
+                const characterTitle = avatarName ? `「${avatarName}」` : "主講者";
+                const avatarTip = document.getElementById('notebooklm-avatar-tip');
+                const promptNormal = document.getElementById('notebooklm-prompt-normal');
+                const promptSplit1 = document.getElementById('notebooklm-prompt-split-1');
+                const promptSplit2 = document.getElementById('notebooklm-prompt-split-2');
+                
+                if (isAvatar) {
+                    avatarTip?.classList.remove('hidden');
+                    if (promptNormal) promptNormal.innerText = `請完全按來源資料內容來生成簡報，不要加入新的內容，並確保${characterTitle}出現在各頁中`;
+                    if (promptSplit1) promptSplit1.innerText = `請完全按來源資料內容來生成簡報，不要加入新的內容，並確保${characterTitle}出現在各頁中，只生成前 10 頁`;
+                    if (promptSplit2) promptSplit2.innerText = `請完全按來源資料內容來生成簡報，不要加入新的內容，並確保${characterTitle}出現在各頁中，簡報從第 11 頁開始生成到最後`;
+                } else {
+                    avatarTip?.classList.add('hidden');
+                    if (promptNormal) promptNormal.innerText = "請完全按來源資料內容來生成簡報，不要加入新的內容";
+                    if (promptSplit1) promptSplit1.innerText = "請完全按來源資料內容來生成簡報，不要加入新的內容，只生成前 10 頁";
+                    if (promptSplit2) promptSplit2.innerText = "請完全按來源資料內容來生成簡報，不要加入新的內容，簡報從第 11 頁開始生成到最後";
+                }
+
+                if (!slidesContainer) return;
+                slidesContainer.innerHTML = '';
+                resultsData.forEach((slide, index) => {
+                    const slideEl = document.createElement('div');
+                    slideEl.className = 'macaron-card rounded-2xl border border-slate-200 overflow-hidden shadow-md flex flex-col gap-4 p-5 sm:p-6';
+                    slideEl.innerHTML = `
+                        <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                            <div class="flex items-center gap-3">
+                                <span class="bg-gradient-to-r from-orange-600 to-teal-600 text-white font-black px-3 py-1 rounded-xl text-sm sm:text-base shadow-sm">
+                                    Slide ${slide.page}
+                                </span>
+                                <span class="font-bold text-sm sm:text-base text-slate-800">頁面 #${slide.page}</span>
+                            </div>
+                            <button onclick="copySlidePrompt(${index})" class="text-xs sm:text-sm px-3 py-1.5 bg-teal-50 hover:bg-teal-100 text-teal-700 font-bold rounded-lg border border-teal-200 transition flex items-center gap-1">
+                                🎨 複製單頁提示詞
+                            </button>
+                        </div>
+
+                        <div class="grid grid-cols-1 gap-4">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">頁面標題</label>
+                                <input type="text" value="${escapeHtml(slide.title)}" class="w-full border border-slate-200 rounded-xl px-3.5 py-2 text-sm sm:text-base text-slate-800 font-bold focus:outline-none focus:ring-2 focus:ring-orange-300 bg-white" onchange="updateResult(${index}, 'title', this.value)">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">本頁內容 (講義與主要文字)</label>
+                                <textarea class="w-full border border-slate-200 rounded-xl p-3.5 text-sm sm:text-base text-slate-700 h-28 focus:outline-none focus:ring-2 focus:ring-orange-300 resize-y leading-relaxed bg-white" onchange="updateResult(${index}, 'content', this.value)">${escapeHtml(slide.content)}</textarea>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-orange-600 uppercase tracking-wider mb-1">排版指南 (Layout Guide)</label>
+                                <textarea class="w-full border border-orange-100 rounded-xl p-3.5 text-xs sm:text-sm text-slate-700 h-24 focus:outline-none focus:ring-2 focus:ring-orange-300 resize-y leading-relaxed bg-orange-50/30" onchange="updateResult(${index}, 'layout', this.value)">${escapeHtml(slide.layout)}</textarea>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-teal-600 uppercase tracking-wider mb-1">AI 生圖 Prompt (英文繪圖指令)</label>
+                                <textarea class="w-full border-2 border-slate-700 rounded-xl p-3.5 text-xs sm:text-sm font-mono font-bold text-violet-300 h-24 focus:outline-none focus:ring-2 focus:ring-teal-400 resize-y leading-relaxed bg-slate-900 shadow-inner" onchange="updateResult(${index}, 'imagePrompt', this.value)">${escapeHtml(slide.imagePrompt)}</textarea>
+                            </div>
+                        </div>
+                    `;
+                    slidesContainer.appendChild(slideEl);
+                });
+            }
+
+            function openResultsModal() {
+                resultsModal?.classList.remove('hidden');
+                resultsModal?.classList.add('flex');
+            }
+
+            function closeResultsModal() {
+                resultsModal?.classList.add('hidden');
+                resultsModal?.classList.remove('flex');
+            }
+
+            btnCloseResults?.addEventListener('click', closeResultsModal);
+            btnReopenResults?.addEventListener('click', openResultsModal);
+
+            window.updateResult = function(index, field, value) {
+                if(resultsData[index]) resultsData[index][field] = value;
+            };
+
+            window.copySlidePrompt = function(index) {
+                if(!resultsData[index]) return;
+                const prompt = resultsData[index].imagePrompt;
+                try {
+                    const tempTextArea = document.createElement("textarea");
+                    tempTextArea.value = prompt;
+                    tempTextArea.style.position = "fixed";
+                    tempTextArea.style.left = "-999999px";
+                    document.body.appendChild(tempTextArea);
+                    tempTextArea.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(tempTextArea);
+                    showToast(`📋 已複製第 ${index + 1} 頁生圖提示詞！`);
+                } catch (e) {
+                    showToast("複製失敗", "error");
+                }
+            };
+
+            // 導出與複製
+            function getExportText() {
+                let txt = `====================================================\n`;
+                txt += `【提示：本檔案適用於 NotebookLM 或 AI 簡報生成】\n`;
+                txt += `使用說明：請將此檔案上傳至 Google NotebookLM 作為來源，即可根據大綱與排版指南快速產出專業簡報！\n`;
+                txt += `====================================================\n\n`;
+                txt += `簡報設計王 - 生成報告\n主題：${currentTopic}\n==========================\n\n【整體風格】\n${currentGlobalStyle}\n==========================\n\n`;
+                resultsData.forEach(p => {
+                    txt += `【第 ${p.page} 頁】\n標題：${p.title}\n內容：${p.content}\n排版：${p.layout}\n提示詞：${p.imagePrompt}\n--------------------------\n\n`;
+                });
+                return txt;
+            }
+
+            btnCopyAll?.addEventListener('click', () => {
+                if(!resultsData.length) return;
+                try {
+                    const tempTextArea = document.createElement("textarea");
+                    tempTextArea.value = getExportText();
+                    tempTextArea.style.position = "fixed";
+                    tempTextArea.style.left = "-999999px";
+                    document.body.appendChild(tempTextArea);
+                    tempTextArea.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(tempTextArea);
+                    showToast("📋 規劃全文複製成功！");
+                } catch (e) {
+                    showToast("複製失敗，請手動複製。", "error");
+                }
+            });
+
+            btnDownloadTxt?.addEventListener('click', () => {
+                if(!resultsData.length) return;
+                const blob = new Blob([getExportText()], {type: 'text/plain'});
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url; a.download = `${currentTopic}_完整規劃_生成簡報用.txt`;
+                a.click(); URL.revokeObjectURL(url);
+                showToast("⬇️ 已開始下載完整規劃檔 (生成簡報用)");
+            });
+
+            btnDownloadPure?.addEventListener('click', () => {
+                if(!resultsData.length) return;
+                const contentLines = resultsData.map((p, index) => {
+                    const lineText = index === 0 
+                        ? `${p.title ? p.title.trim() + ' ' : ''}${p.content || ''}`
+                        : (p.content || '');
+                    return lineText.replace(/[\r\n]+/g, ' ').trim();
+                }).filter(Boolean).join('\n');
+                const blob = new Blob([contentLines], {type: 'text/plain;charset=utf-8'});
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url; a.download = `${currentTopic}_純文字_語音配音用.txt`;
+                a.click(); URL.revokeObjectURL(url);
+                showToast("⬇️ 已開始下載純文字稿 (語音配音用)");
+            });
+
+            function escapeHtml(unsafe) {
+                if(!unsafe) return "";
+                return unsafe.toString().replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+            }
+
+            function showToast(message, type = "success") {
+                const toastContainer = document.getElementById('toast-container');
+                if (!toastContainer) return;
+                const toast = document.createElement('div');
+                
+                let bgColor = "bg-slate-900 border-slate-700 text-white";
+                if (type === 'error') bgColor = "bg-red-600 border-red-700 text-white";
+                if (type === 'warning') bgColor = "bg-sky-500 border-sky-600 text-white";
+
+                toast.className = `px-4 py-3 rounded-2xl text-xs sm:text-sm font-bold shadow-xl transition-all duration-300 transform translate-y-2 opacity-0 border ${bgColor} flex items-center gap-2`;
+                toast.innerText = message;
+                
+                toastContainer.appendChild(toast);
+                
+                setTimeout(() => {
+                    toast.classList.remove('translate-y-2', 'opacity-0');
+                }, 10);
+                
+                setTimeout(() => {
+                    toast.classList.add('translate-y-2', 'opacity-0');
+                    setTimeout(() => { toast.remove(); }, 300);
+                }, 3200);
+            }
+        });
+    </script>
+<script>
+/* 懸浮選單：拖曳、收合、跨頁保存位置、邊界保護 */
+(()=>{
+ const wrap=document.getElementById('ygj-menu');
+ const btn=document.getElementById('ygj-trigger');
+ const panel=document.getElementById('ygj-panel');
+ if(!wrap||!btn||!panel)return;
+ const KEY='ygj-mascot-menu-position-v1';
+ let pointer=null, dragged=false, blockClick=false;
+ const storageGet=()=>{try{return JSON.parse(localStorage.getItem(KEY)||'null')}catch{return null}};
+ const storageSet=obj=>{try{localStorage.setItem(KEY,JSON.stringify(obj))}catch{}};
+ const bounds=()=>({w:wrap.offsetWidth,h:wrap.offsetHeight});
+ function place(x,y){
+   const {w,h}=bounds();
+   x=Math.max(8,Math.min(innerWidth-w-8,x));
+   y=Math.max(8,Math.min(innerHeight-h-8,y));
+   wrap.style.setProperty('left',x+'px','important');
+   wrap.style.setProperty('top',y+'px','important');
+   wrap.style.setProperty('right','auto','important');
+   wrap.style.setProperty('bottom','auto','important');
+   positionPanel();
+ }
+ function positionPanel(){
+   const r=wrap.getBoundingClientRect();
+   panel.classList.toggle('ygj-panel-left',r.left+r.width/2<innerWidth/2);
+   panel.classList.toggle('ygj-panel-below',r.top<Math.min(350,innerHeight*.55));
+ }
+ function save(){const r=wrap.getBoundingClientRect();storageSet({x:r.left/Math.max(1,innerWidth-r.width),y:r.top/Math.max(1,innerHeight-r.height)});}
+ function restore(){const pos=storageGet();const {w,h}=bounds();if(pos&&Number.isFinite(pos.x)&&Number.isFinite(pos.y))place(pos.x*(innerWidth-w),pos.y*(innerHeight-h));else place(innerWidth-w-18,innerHeight-h-18)}
+ const close=()=>{panel.hidden=true;btn.setAttribute('aria-expanded','false');btn.setAttribute('aria-label','展開 AI 工具選單')};
+ btn.setAttribute('aria-label','展開 AI 工具選單；按住可移動位置');
+ btn.addEventListener('pointerdown',e=>{
+   if(e.button!==0||pointer!==null)return;
+   const r=wrap.getBoundingClientRect();
+   pointer={id:e.pointerId,startX:e.clientX,startY:e.clientY,left:r.left,top:r.top};dragged=false;
+   try{btn.setPointerCapture(e.pointerId)}catch{}
+ });
+ btn.addEventListener('pointermove',e=>{
+   if(!pointer||e.pointerId!==pointer.id)return;
+   const dx=e.clientX-pointer.startX,dy=e.clientY-pointer.startY;
+   if(!dragged&&Math.hypot(dx,dy)<7)return;
+   if(!dragged){dragged=true;close();wrap.classList.add('ygj-dragging')}
+   place(pointer.left+dx,pointer.top+dy);
+   e.preventDefault();
+ });
+ const end=e=>{
+   if(!pointer||e.pointerId!==pointer.id)return;
+   if(dragged){save();blockClick=true;setTimeout(()=>blockClick=false,180)}
+   wrap.classList.remove('ygj-dragging');pointer=null;dragged=false;
+   try{btn.releasePointerCapture(e.pointerId)}catch{}
+ };
+ btn.addEventListener('pointerup',end);btn.addEventListener('pointercancel',end);
+ btn.addEventListener('click',e=>{
+   if(blockClick){e.preventDefault();e.stopPropagation();return}
+   panel.hidden=!panel.hidden;btn.setAttribute('aria-expanded',String(!panel.hidden));
+   if(!panel.hidden)positionPanel();
+ });
+ document.addEventListener('pointerdown',e=>{if(!wrap.contains(e.target))close()});
+ document.addEventListener('keydown',e=>{if(e.key==='Escape')close()});
+ addEventListener('resize',()=>{const r=wrap.getBoundingClientRect();place(r.left,r.top);save()});
+ restore();close();
+})();
+</script>
+<script>
+(()=>{
+ const KEY='ygj-ai-tools-theme';
+ const btn=document.getElementById('ygj-theme-toggle');
+ const get=()=>{try{return localStorage.getItem(KEY)||'light'}catch(e){return 'light'}};
+ const set=theme=>{document.documentElement.setAttribute('data-theme',theme);btn.textContent=theme==='dark'?'☀️ 切換亮色系':'🌙 切換暗色系';btn.setAttribute('aria-pressed',String(theme==='dark'));};
+ set(get()==='dark'?'dark':'light');
+ btn.addEventListener('click',()=>{const next=document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark';set(next);try{localStorage.setItem(KEY,next)}catch(e){}});
+ window.addEventListener('storage',e=>{if(e.key===KEY)set(e.newValue==='dark'?'dark':'light')});
+})();
+</script></body>
+</html>

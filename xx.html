@@ -1,0 +1,855 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>雙角色 AI 對話語音工作室｜楊貴傑老師</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <style>
+        .custom-scrollbar::-webkit-scrollbar { width: 5px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        .hide { display: none !important; }
+        #message-box { transition: all 0.3s ease-in-out; }
+
+        :root { color-scheme: light; }
+        body { background: radial-gradient(circle at 15% 6%,#fff0ed 0,transparent 32%), radial-gradient(circle at 95% 5%,#e7f5ff 0,transparent 30%),linear-gradient(140deg,#f9f6ff,#effffd 60%,#fff7ee); min-height:100vh; transition:background .25s,color .25s; }
+        .hero-ribbon { background:linear-gradient(115deg,#ff697d,#8b5cf6 52%,#06b6d4); color:#fff; border-radius:27px; box-shadow:0 14px 45px rgba(100,70,180,.20); padding:24px 14px; }
+        .hero-ribbon h1,.hero-ribbon p {color:white !important}
+        .theme-btn { border:1px solid rgba(255,255,255,.65); padding:10px 14px; border-radius:16px; color:white; background:rgba(255,255,255,.19); font-weight:700; transition:background .2s; }
+        .theme-btn:hover {background:rgba(255,255,255,.3)}
+        .feature-pill {display:inline-block;font-size:12px;font-weight:650;border-radius:30px;padding:5px 12px;background:rgba(255,255,255,.20);color:#fff}
+        .settings-bar {background:linear-gradient(120deg,#fff5eb,#f0eeff,#e8fffa); border:1px solid #d9ceff;border-radius:24px;padding:19px 22px;box-shadow:0 12px 30px rgba(89,60,139,.09)}
+        .settings-bar input {background:#fff;border:1px solid #beb5dd;border-radius:12px;padding:11px 14px;color:#26334c;min-width:0;width:100%}
+        .settings-bar label {font-weight:750;color:#4c3076;font-size:14px}
+        .settings-bar p {color:#6b6086;font-size:12px;margin-top:7px}
+        body.dark-mode {color-scheme:dark; background:radial-gradient(circle at 15% 5%,#392051,transparent 36%),radial-gradient(circle at 90% 0%,#0d4957,transparent 36%),linear-gradient(140deg,#0d1424,#1b1a37 65%,#172831);color:#ecf4ff !important;}
+        body.dark-mode .bg-white {background-color:#202d43 !important;}
+        body.dark-mode .bg-slate-50 {background-color:#14243b !important;}
+        body.dark-mode .bg-slate-100 {background-color:#33435a !important;}
+        body.dark-mode .bg-blue-50,body.dark-mode .bg-emerald-50,body.dark-mode .bg-indigo-50 {background-color:#243955 !important;}
+        body.dark-mode .bg-green-100 {background-color:#164738 !important;}
+        body.dark-mode .text-slate-900,body.dark-mode .text-slate-800,body.dark-mode .text-slate-700 {color:#ecf4ff !important;}
+        body.dark-mode .text-slate-500,body.dark-mode .text-slate-400 {color:#b6c6dc !important;}
+        body.dark-mode .text-blue-600 {color:#82c7ff !important;}
+        body.dark-mode .text-emerald-600 {color:#85f0bf !important;}
+        body.dark-mode .text-indigo-600 {color:#c7b5ff !important;}
+        body.dark-mode .border-slate-200,body.dark-mode .border-blue-100,body.dark-mode .border-emerald-100,body.dark-mode .border-blue-50,body.dark-mode .border-emerald-50,body.dark-mode .border-indigo-100 {border-color:#405271 !important;}
+        body.dark-mode input,body.dark-mode textarea,body.dark-mode select {background:#111e33 !important;color:#f2f7ff !important;border-color:#546783 !important;}
+        body.dark-mode input::placeholder,body.dark-mode textarea::placeholder {color:#91a0b8 !important;}
+        body.dark-mode .settings-bar {background:linear-gradient(115deg,#2c2046,#123846);border-color:#615b88}
+        body.dark-mode .settings-bar label {color:#efe0ff}
+        body.dark-mode .settings-bar p {color:#c2d3e5}
+        body.dark-mode .hero-ribbon {background:linear-gradient(115deg,#853b7c,#5035aa,#086e84)}
+        body.dark-mode .bg-blue-600 {background-color:#3268c7 !important}
+        body.dark-mode .bg-emerald-600 {background-color:#168361 !important}
+        body.dark-mode .bg-indigo-600 {background-color:#6545d2 !important}
+        body.dark-mode .hover\\:bg-slate-100:hover {background-color:#354b67 !important}
+        @media(max-width:640px){.hero-ribbon{padding:18px 12px}.hero-ribbon h1{font-size:1.6rem}}
+    
+        /* === 楊貴傑老師 Q版 3D 講師娃娃 & 浮水印 === */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background: url('teacher_mascot.png') center 55% / min(46vw, 420px) no-repeat;
+            opacity: .065;
+            pointer-events: none;
+            z-index: 0;
+            filter: drop-shadow(0 14px 38px rgba(0,0,0,.12));
+        }
+        body > * { position: relative; z-index: 1; }
+        .ygj-floating-brand {
+            position: fixed;
+            right: 18px;
+            bottom: 18px;
+            z-index: 70;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 14px;
+            border-radius: 22px;
+            border: 1px solid rgba(255,255,255,.75);
+            background: rgba(255,255,255,.90);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 14px 34px rgba(39,55,86,.18);
+            max-width: min(92vw, 320px);
+        }
+        .ygj-floating-brand img {
+            width: 66px;
+            height: 66px;
+            border-radius: 18px;
+            object-fit: cover;
+            flex-shrink: 0;
+            background: linear-gradient(135deg,#e0f2fe,#ede9fe,#fef3c7);
+            box-shadow: 0 10px 22px rgba(99,102,241,.18);
+        }
+        .ygj-floating-brand-text { min-width: 0; display:flex; flex-direction:column; }
+        .ygj-floating-brand-text strong { font-size: .98rem; line-height: 1.2; color: #1f2937; }
+        .ygj-floating-brand-text span { font-size: .72rem; color: #6b7280; line-height: 1.3; }
+        .ygj-floating-links { display:flex; flex-wrap:wrap; gap:6px; margin-top:6px; }
+        .ygj-floating-links a {
+            text-decoration: none;
+            font-size: .72rem;
+            font-weight: 800;
+            padding: 4px 9px;
+            border-radius: 999px;
+            background: linear-gradient(135deg,#14b8a6,#f97316,#c026d3);
+            color: white !important;
+            box-shadow: 0 5px 15px rgba(168,85,247,.18);
+            white-space: nowrap;
+        }
+        .ygj-floating-links a:hover { transform: translateY(-1px); opacity: .95; }
+        @media (max-width: 768px) {
+            body::before { background-size: min(70vw, 290px); opacity: .055; background-position: center 50%; }
+            .ygj-floating-brand { right: 10px; bottom: 10px; padding: 8px 10px; gap: 8px; max-width: calc(100vw - 20px); }
+            .ygj-floating-brand img { width: 56px; height: 56px; border-radius: 14px; }
+            .ygj-floating-brand-text strong { font-size: .88rem; }
+            .ygj-floating-brand-text span { font-size: .66rem; }
+        }
+
+        body.dark-mode::before { opacity: .085; }
+
+    
+/* 導覽與浮水印精修 */
+body::before {background-image:url('teacher_mascot.png') !important;background-size:clamp(260px,36vw,510px) auto !important;background-position:right 8vw center !important;opacity:.16 !important;filter:contrast(1.08) saturate(.9) !important;}
+body.dark-mode::before,:root[data-theme="dark"] body::before{opacity:.22 !important}
+.ygj-floating-brand {position:fixed !important;right:18px !important;bottom:18px !important;z-index:500 !important;display:block !important;background:none !important;border:0 !important;padding:0 !important;box-shadow:none !important;max-width:none !important;}
+.ygj-trigger{border:1px solid #9b91dc;border-radius:999px;background:linear-gradient(120deg,#483486,#0a7483);box-shadow:0 12px 30px #101a3e55;display:flex;align-items:center;gap:9px;color:white;padding:6px 14px 6px 6px;cursor:pointer;font-size:13px;font-weight:750;}
+.ygj-trigger img{width:44px !important;height:44px !important;object-fit:cover;border-radius:50% !important;border:2px solid white;flex-shrink:0}
+.ygj-panel{position:absolute;right:0;bottom:calc(100% + 10px);width:282px;background:#fbf9ff;border:1px solid #d5caef;border-radius:19px;box-shadow:0 18px 42px #13172b66;padding:15px;display:grid;gap:9px;color:#25254a}
+.ygj-panel[hidden]{display:none !important}
+.ygj-panel-title{display:flex;gap:10px;align-items:center;padding:2px 2px 9px;border-bottom:1px solid #ece6f6}
+.ygj-panel-title img{width:45px !important;height:45px !important;object-fit:cover;border-radius:12px !important;flex-shrink:0}
+.ygj-panel-title b{display:block;font-size:15px;color:#30275d}.ygj-panel-title small{color:#74718a;font-size:11px}
+.ygj-panel a{display:flex;align-items:center;gap:10px;text-decoration:none !important;border:1px solid #e3dff0;border-radius:12px;background:white;color:#312f63 !important;padding:12px;font-size:13px;font-weight:750;transition:background .18s,transform .18s}
+.ygj-panel a:hover{background:#eeeaff;transform:translateX(-2px)}.ygj-panel a.current{background:linear-gradient(110deg,#5b4dca,#0e8b9c);color:white !important;border-color:transparent}
+.ygj-panel a .em{font-size:20px}.ygj-panel-note{text-align:center;font-size:11px;color:#77738e}
+@media(max-width:700px){body::before{background-position:right -12vw center !important;background-size:65vw auto !important;opacity:.14 !important}.ygj-floating-brand{right:10px !important;bottom:10px !important}.ygj-trigger{font-size:12px;padding:5px 12px 5px 5px}.ygj-trigger img{width:38px !important;height:38px !important}.ygj-panel{width:min(282px,calc(100vw - 20px))}}
+
+
+/* Q版老師可移動懸浮入口：原有浮水印與主頁排版不變 */
+#ygj-menu.ygj-floating-brand {
+ position:fixed !important;left:auto !important;top:auto !important;
+ right:18px !important;bottom:18px !important;z-index:1200 !important;
+ width:60px !important;height:60px !important;max-width:none !important;
+ padding:0 !important;background:transparent !important;box-shadow:none !important;
+ touch-action:none;user-select:none;-webkit-user-select:none;
+}
+#ygj-menu .ygj-trigger {
+ width:60px;height:60px;padding:4px !important;border-radius:50% !important;
+ display:grid;place-items:center;gap:0 !important;cursor:grab;touch-action:none;
+ border:2px solid #d9c9ff;background:linear-gradient(135deg,#a78bfa,#0d9488);
+ box-shadow:0 10px 28px rgba(17,34,74,.4),0 0 0 3px rgba(255,255,255,.24);
+}
+#ygj-menu .ygj-trigger:active{cursor:grabbing}
+#ygj-menu .ygj-trigger:focus-visible {outline:3px solid #fbbf24;outline-offset:4px}
+#ygj-menu .ygj-trigger img {width:49px !important;height:49px !important;border:0 !important;border-radius:50% !important;pointer-events:none}
+#ygj-menu .ygj-trigger span {display:none !important}
+#ygj-menu.ygj-dragging .ygj-trigger {box-shadow:0 15px 40px rgba(31,41,92,.45);transform:scale(1.08)}
+#ygj-menu .ygj-panel {left:auto;right:0;bottom:calc(100% + 12px);top:auto;width:282px;touch-action:auto;user-select:text;-webkit-user-select:text}
+#ygj-menu .ygj-panel.ygj-panel-left {left:0;right:auto}
+#ygj-menu .ygj-panel.ygj-panel-below {top:calc(100% + 12px);bottom:auto}
+@media(max-width:700px){#ygj-menu.ygj-floating-brand{width:54px !important;height:54px !important;right:12px !important;bottom:12px !important}#ygj-menu .ygj-trigger{width:54px;height:54px}#ygj-menu .ygj-trigger img{width:45px !important;height:45px !important}#ygj-menu .ygj-panel{width:min(282px,calc(100vw - 24px))}}
+
+
+/* 深色模式：讓所有說明、按鈕與試聽面板的字色一致 */
+body.dark-mode .text-blue-500, body.dark-mode .text-green-700,
+body.dark-mode .text-emerald-700,body.dark-mode .text-slate-600,
+body.dark-mode .text-indigo-700,body.dark-mode .text-red-500{color:#c2e8ff!important}
+body.dark-mode .bg-blue-50\/20,body.dark-mode .bg-emerald-50\/20,
+body.dark-mode .bg-indigo-50\/50,body.dark-mode .bg-indigo-50\/20{background-color:#223a55!important}
+body.dark-mode .text-white{color:#fff!important}
+body.dark-mode audio{color-scheme:dark}
+body.dark-mode button:disabled{opacity:.45}
+body.dark-mode .ygj-panel{background:#243450!important;color:#f4f8ff!important}
+body.dark-mode .ygj-panel a{color:#f4f8ff!important}
+body.dark-mode :is(button,input,select,textarea):focus-visible{outline:2px solid #67e8f9;outline-offset:2px}
+
+</style>
+</head>
+<body class="bg-slate-50 text-slate-900 font-sans p-4 md:p-8 pb-32">
+
+    <div class="ygj-floating-brand" id="ygj-menu"><button type="button" class="ygj-trigger" id="ygj-trigger" aria-controls="ygj-panel" aria-expanded="false"><img src="teacher_mascot.png" alt="Q版楊貴傑老師"><span>AI 工具選單 ▴</span></button><nav class="ygj-panel" id="ygj-panel" aria-label="網站工具導覽" hidden><div class="ygj-panel-title"><img src="teacher_mascot.png" alt=""><span><b>楊貴傑老師</b><small>AI 多媒體工具中心</small></span></div><a target="_blank" rel="noopener noreferrer" href="index.html"><span class="em">📊</span>簡報設計王</a><a target="_blank" rel="noopener noreferrer" href="xx.html" class="current"><span class="em">🎙️</span>對話式語音產生器</a><a target="_blank" rel="noopener noreferrer" href="yy.html"><span class="em">🎬</span>圖音合併工具</a><div class="ygj-panel-note">選擇工具，即可切換網頁</div></nav></div>
+
+    <div class="max-w-4xl mx-auto space-y-8">
+        
+        <!-- 自訂訊息框 (取代 alert) -->
+        <div id="message-box" class="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 bg-red-600 text-white px-6 py-3 rounded-full shadow-lg font-bold flex items-center gap-2 opacity-0 pointer-events-none scale-95">
+            <i data-lucide="alert-circle" class="w-5 h-5"></i>
+            <span id="message-text">發生錯誤</span>
+        </div>
+
+        <header class="hero-ribbon text-center space-y-3 relative">
+            <div class="flex justify-end gap-2 px-2"><button id="theme-switch" class="theme-btn" type="button" aria-label="切換亮色暗色主題" aria-pressed="false">🌙 切換暗色系</button></div>
+            <div class="flex justify-center">
+                <div class="bg-indigo-600 p-4 rounded-3xl shadow-2xl rotate-3">
+                    <i data-lucide="message-square" class="text-white w-10 h-10"></i>
+                </div>
+            </div>
+            <h1 class="text-4xl font-extrabold text-slate-800 tracking-tight">雙角色 AI 對話語音工作室</h1>
+            <p class="text-slate-500 font-medium">雙角色 AI 配音｜智慧分行・逐句試聽・WAV 合併・ZIP 匯出</p>
+                    <div class="flex flex-wrap justify-center gap-2 mt-3"><span class="feature-pill">🎙️ 12 種聲線</span><span class="feature-pill">💬 雙人對話</span><span class="feature-pill">🎧 即時試聽</span><span class="feature-pill">📦 ZIP 下載</span></div>
+        </header>
+
+        <section class="settings-bar space-y-2" aria-label="Gemini API 設定">
+            <div class="flex items-center gap-2"><span>🔐</span><label for="user-api-key">Gemini API Key（僅存在本頁記憶體，重新整理需再輸入）</label></div>
+            <div class="flex flex-col sm:flex-row gap-2"><input id="user-api-key" type="password" autocomplete="off" placeholder="貼上自己的 Gemini API Key（AIza...）" aria-label="Gemini API Key"><button id="key-visibility" type="button" class="shrink-0 rounded-xl px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white font-bold">顯示／隱藏</button></div>
+            <p>本頁為純前端單頁網站，您輸入的金鑰會隨請求傳送至 Google API。公開 GitHub Pages 上，建議每位使用者輸入自己的金鑰；不要將共用金鑰寫在 HTML 原始碼中。API 方案、費用與可用模型以 Google 專案實際權限為準。</p>
+        </section>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- 角色 A 設定 -->
+            <div class="bg-white p-6 rounded-[2rem] border-2 border-blue-100 shadow-sm space-y-4">
+                <div class="flex items-center gap-2 text-blue-600 font-bold border-b border-blue-50 pb-3 uppercase text-xs tracking-widest">
+                    <i data-lucide="user" class="w-4 h-4"></i> 角色 A 設定
+                </div>
+                <div class="space-y-3">
+                    <input type="text" id="charA-name" onchange="updateChar('A', 'name', this.value)" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-all font-bold" placeholder="名稱">
+                    <select id="charA-voice" onchange="updateChar('A', 'voice', this.value)" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm cursor-pointer focus:ring-2 focus:ring-blue-500 outline-none font-medium">
+                        <!-- 選項由 JS 動態生成 -->
+                    </select>
+                </div>
+            </div>
+
+            <!-- 角色 B 設定 -->
+            <div class="bg-white p-6 rounded-[2rem] border-2 border-emerald-100 shadow-sm space-y-4">
+                <div class="flex items-center gap-2 text-emerald-600 font-bold border-b border-emerald-50 pb-3 uppercase text-xs tracking-widest">
+                    <i data-lucide="user" class="w-4 h-4"></i> 角色 B 設定
+                </div>
+                <div class="space-y-3">
+                    <input type="text" id="charB-name" onchange="updateChar('B', 'name', this.value)" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-emerald-500 outline-none transition-all font-bold" placeholder="名稱">
+                    <select id="charB-voice" onchange="updateChar('B', 'voice', this.value)" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm cursor-pointer focus:ring-2 focus:ring-emerald-500 outline-none font-medium">
+                        <!-- 選項由 JS 動態生成 -->
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <section class="bg-white rounded-[2.5rem] shadow-xl border border-slate-200 p-6 md:p-8 space-y-6">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 px-2">
+                <h2 class="text-xl font-bold text-slate-800 flex items-center gap-2">
+                    <i data-lucide="play" class="w-5 h-5 text-indigo-600"></i> 劇本編排
+                </h2>
+                <div class="flex flex-wrap gap-2">
+                    <button id="btn-zip" onclick="downloadAllAsZip()" class="flex items-center gap-1.5 px-4 py-2 bg-slate-100 text-slate-700 rounded-full font-bold text-[11px] hover:bg-slate-200 disabled:opacity-50 transition-all border border-slate-200 uppercase">
+                        <i data-lucide="archive" class="w-3.5 h-3.5" id="icon-zip"></i> <span id="text-zip">打包 ZIP</span>
+                    </button>
+                    <div class="flex gap-2">
+                        <button onclick="addLine('A')" class="bg-blue-50 text-blue-600 px-4 py-2 rounded-full font-black text-xs hover:bg-blue-100 transition-all">+ A</button>
+                        <button onclick="addLine('B')" class="bg-emerald-50 text-emerald-600 px-4 py-2 rounded-full font-black text-xs hover:bg-emerald-100 transition-all">+ B</button>
+                    </div>
+                </div>
+            </div>
+
+            <p class="text-[10px] text-slate-400 px-2 italic">※ 提示：在輸入框貼上多行文字可自動分行。</p>
+
+            <!-- 劇本清單容器 -->
+            <div id="script-container" class="space-y-5 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
+                <!-- 由 JS 動態渲染劇本 -->
+            </div>
+
+            <button id="btn-generate-all" onclick="handleGenerateMerge()" class="w-full py-5 rounded-[2rem] font-black text-lg text-white shadow-2xl transition-all flex items-center justify-center gap-3 active:scale-[0.98] bg-indigo-600 hover:bg-indigo-700">
+                <i data-lucide="volume-2" class="w-5 h-5" id="icon-generate"></i> 
+                <span id="text-generate">合成單一合併音檔</span>
+            </button>
+        </section>
+
+        <section id="result-section" class="hide animate-in zoom-in-95 fade-in duration-500">
+            <div class="bg-white border-2 border-indigo-500 rounded-[3rem] p-8 md:p-10 shadow-2xl flex flex-col md:flex-row items-center gap-8 ring-8 ring-indigo-50 relative">
+                <div class="flex-1 space-y-4 text-center md:text-left">
+                    <div class="inline-flex items-center gap-2 px-4 py-1.5 bg-green-100 text-green-700 rounded-full text-xs font-black">
+                        <i data-lucide="check-circle-2" class="w-4 h-4"></i> 合成完畢
+                    </div>
+                    <h3 class="text-3xl font-black text-slate-800">完整合併音檔</h3>
+                    <p id="result-stats" class="text-sm text-slate-400 font-medium"></p>
+                </div>
+                <div class="w-full md:w-auto flex flex-col gap-4">
+                    <audio id="result-audio" controls class="w-full md:w-72 h-10"></audio>
+                    <a id="result-download" download="完整對話合併檔.wav" class="flex-1 bg-indigo-600 text-white py-4 rounded-2xl font-bold flex items-center justify-center gap-2 hover:bg-indigo-700 active:scale-95 transition-all uppercase text-sm">
+                        <i data-lucide="download" class="w-5 h-5"></i> 下載完整版
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        <footer class="mt-20 pt-10 border-t border-slate-200 text-left space-y-6 pb-24">
+            <div class="flex flex-col items-start gap-4">
+                <div class="text-slate-500 text-sm font-medium">
+                    楊貴傑老師製作
+                    <div class="ygj-revision-credit" style="margin-top:6px;font-size:12px;opacity:.8;">修改於阿剛老師</div>
+                </div>
+                <div class="bg-slate-200/40 px-6 py-2 rounded-full text-[10px] text-slate-400 font-bold uppercase tracking-[0.2em] border border-slate-200 shadow-sm">
+                    本作品採用 <a href="https://creativecommons.org/licenses/by/4.0/deed.zh_TW" target="_blank" class="hover:text-slate-600 underline">姓名標示 4.0 國際 (CC BY 4.0)</a> 授權
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        // --- 核心配置 ---
+        let apiKey = ""; // 由使用者於本頁輸入，不內嵌公開金鑰 
+        const model = "gemini-2.5-flash-preview-tts";
+
+        // 語音清單，加上性別提示
+        const VOICES = [
+            { id: "Kore", name: "Kore", desc: "均衡中性", gender: "女聲" },
+            { id: "Zephyr", name: "Zephyr", desc: "輕快活潑 - 適合教學", gender: "男聲" },
+            { id: "Puck", name: "Puck", desc: "淘氣靈動 - 適合故事", gender: "男聲" },
+            { id: "Charon", name: "Charon", desc: "沉穩厚實 - 具權威感", gender: "男聲" },
+            { id: "Fenrir", name: "Fenrir", desc: "冷靜深沉 - 具神祕感", gender: "男聲" },
+            { id: "Leda", name: "Leda", desc: "溫柔親切 - 具療癒感", gender: "女聲" },
+            { id: "Orus", name: "Orus", desc: "明亮清晰 - 適合簡報", gender: "男聲" },
+            { id: "Aoede", name: "Aoede", desc: "優雅從容 - 具藝術氣質", gender: "女聲" },
+            { id: "Callirrhoe", name: "Callirrhoe", desc: "知性乾練 - 商業推薦", gender: "女聲" },
+            { id: "Enceladus", name: "Enceladus", desc: "磁性渾厚 - 適合旁白", gender: "男聲" },
+            { id: "Iapetus", name: "Iapetus", desc: "成熟穩重 - 專業解說", gender: "男聲" },
+            { id: "Algieba", name: "Algieba", desc: "活力朝氣 - 廣告語氣", gender: "女聲" }
+        ];
+
+        // --- 狀態管理 ---
+        let state = {
+            charA: { name: "角色 A", voice: "Leda" },
+            charB: { name: "角色 B", voice: "Charon" },
+            scriptItems: [
+                { id: '1', speaker: 'A', text: '', audioUrl: null, audioBlob: null, isLineLoading: false },
+                { id: '2', speaker: 'B', text: '', audioUrl: null, audioBlob: null, isLineLoading: false }
+            ],
+            isGenerating: false,
+            isZipping: false
+        };
+
+        // --- 初始化 UI ---
+        function initApp() {
+            lucide.createIcons();
+            const themeSwitch = document.getElementById('theme-switch');
+            themeSwitch.addEventListener('click', () => {
+                const isDark = document.body.classList.toggle('dark-mode');
+                themeSwitch.textContent = isDark ? '☀️ 切換亮色系' : '🌙 切換暗色系';
+                themeSwitch.setAttribute('aria-pressed', String(isDark));
+                try { localStorage.setItem('ygj-ai-tools-theme',isDark?'dark':'light'); } catch(e) {}
+            });
+            try { if(localStorage.getItem('ygj-ai-tools-theme')==='dark') themeSwitch.click(); } catch(e) {}
+            window.addEventListener('storage', e => { if(e.key==='ygj-ai-tools-theme'){const dark=e.newValue==='dark';if(document.body.classList.contains('dark-mode')!==dark)themeSwitch.click();} });
+            const apiInput = document.getElementById('user-api-key');
+            apiInput.addEventListener('input', () => { apiKey=apiInput.value.trim(); });
+            document.getElementById('key-visibility').addEventListener('click', () => {apiInput.type = apiInput.type==='password'?'text':'password';});
+            // 初始化選單
+            const voiceOptionsHTML = VOICES.map(v => `<option value="${v.id}">${v.name} (${v.gender}) - ${v.desc}</option>`).join('');
+            document.getElementById('charA-voice').innerHTML = voiceOptionsHTML;
+            document.getElementById('charB-voice').innerHTML = voiceOptionsHTML;
+
+            // 綁定初始值
+            document.getElementById('charA-name').value = state.charA.name;
+            document.getElementById('charA-voice').value = state.charA.voice;
+            document.getElementById('charB-name').value = state.charB.name;
+            document.getElementById('charB-voice').value = state.charB.voice;
+
+            renderScriptList();
+        }
+
+        // --- 自訂訊息框 ---
+        function showMessage(text, isError = true) {
+            const box = document.getElementById('message-box');
+            document.getElementById('message-text').innerText = text;
+            box.className = `fixed top-4 left-1/2 transform -translate-x-1/2 z-50 px-6 py-3 rounded-full shadow-lg font-bold flex items-center gap-2 transition-all duration-300 ease-in-out ${isError ? 'bg-red-600 text-white' : 'bg-green-600 text-white'}`;
+            
+            setTimeout(() => {
+                box.classList.remove('opacity-0', 'scale-95', 'pointer-events-none');
+            }, 10);
+
+            setTimeout(() => {
+                box.classList.add('opacity-0', 'scale-95', 'pointer-events-none');
+            }, 3000);
+        }
+
+        window.updateChar = function(role, field, value) {
+            if (role === 'A') state.charA[field] = value;
+            if (role === 'B') state.charB[field] = value;
+            
+            // 關鍵：如果改變了語音，強制清除該角色舊有的音檔，確保重新生成
+            if (field === 'voice') {
+                state.scriptItems.forEach(item => {
+                    if (item.speaker === role) {
+                        if (item.audioUrl) URL.revokeObjectURL(item.audioUrl);
+                        item.audioUrl = null;
+                        item.audioBlob = null;
+                    }
+                });
+            }
+            renderScriptList(); 
+        };
+
+        window.addLine = function(speaker) {
+            state.scriptItems.push({
+                id: Math.random().toString(36).substr(2, 9),
+                speaker: speaker,
+                text: '',
+                audioUrl: null,
+                audioBlob: null,
+                isLineLoading: false
+            });
+            renderScriptList();
+            setTimeout(() => {
+                const container = document.getElementById('script-container');
+                container.scrollTop = container.scrollHeight;
+            }, 50);
+        };
+
+        window.removeLine = function(id) {
+            if (state.scriptItems.length <= 1) return;
+            const idx = state.scriptItems.findIndex(i => i.id === id);
+            if (idx > -1) {
+                const item = state.scriptItems[idx];
+                if (item.audioUrl) URL.revokeObjectURL(item.audioUrl);
+                state.scriptItems.splice(idx, 1);
+                renderScriptList();
+            }
+        };
+
+        // 角色直接切換
+        window.switchRole = function(id, newSpeaker) {
+            const item = state.scriptItems.find(i => i.id === id);
+            if (item && item.speaker !== newSpeaker) {
+                item.speaker = newSpeaker;
+                // 切換角色後，舊的音檔作廢
+                if (item.audioUrl) URL.revokeObjectURL(item.audioUrl);
+                item.audioUrl = null;
+                item.audioBlob = null;
+                renderScriptList();
+            }
+        };
+
+        // 智慧分行與輸入更新
+        window.handleTextUpdate = function(id, textarea) {
+            const val = textarea.value;
+            const lines = val.split(/\r?\n/);
+
+            if (lines.length <= 1) {
+                const item = state.scriptItems.find(i => i.id === id);
+                item.text = val;
+                // 若文字變動，清除舊音檔
+                if (item.audioUrl) {
+                    URL.revokeObjectURL(item.audioUrl);
+                    item.audioUrl = null;
+                    item.audioBlob = null;
+                    const audioBox = document.getElementById(`audio-box-${id}`);
+                    if (audioBox) audioBox.classList.add('hide');
+                }
+                textarea.rows = Math.max(1, Math.ceil(val.length / 40));
+                updateButtonsState();
+            } else {
+                // 觸發智慧分行
+                const idx = state.scriptItems.findIndex(i => i.id === id);
+                const speaker = state.scriptItems[idx].speaker;
+                
+                const newItems = lines.filter(l => l.trim() !== "").map(lineText => ({
+                    id: Math.random().toString(36).substr(2, 9),
+                    speaker: speaker,
+                    text: lineText,
+                    audioUrl: null,
+                    audioBlob: null,
+                    isLineLoading: false
+                }));
+
+                if (newItems.length > 0) {
+                    state.scriptItems.splice(idx, 1, ...newItems);
+                    renderScriptList();
+                }
+            }
+        };
+
+        function escapeHTML(value) { return String(value).replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch])); }
+        function renderScriptList() {
+            const container = document.getElementById('script-container');
+            container.innerHTML = '';
+
+            state.scriptItems.forEach(item => {
+                const isA = item.speaker === 'A';
+                const charNameA = escapeHTML(state.charA.name);
+                const charNameB = escapeHTML(state.charB.name);
+
+                const html = `
+                    <div class="group flex flex-col gap-2 p-4 rounded-[1.5rem] transition-all border ${isA ? 'bg-blue-50/20 border-blue-100 hover:border-blue-300' : 'bg-emerald-50/20 border-emerald-100 hover:border-emerald-300'} hover:shadow-md mb-4" id="item-${item.id}">
+                        <div class="flex items-start gap-3">
+                            <div class="mt-3 text-slate-300 hidden md:block">
+                                <i data-lucide="grip-vertical" class="w-5 h-5"></i>
+                            </div>
+                            <div class="flex-1 space-y-3">
+                                <div class="flex items-center justify-between">
+                                    
+                                    <!-- 角色切換開關 -->
+                                    <div class="flex gap-1 bg-white border border-slate-200 p-1 rounded-xl shadow-sm">
+                                        <button onclick="switchRole('${item.id}', 'A')" class="${isA ? 'bg-blue-600 text-white' : 'text-slate-400 hover:bg-slate-100'} px-3 py-1 rounded-lg text-[10px] font-black transition-all uppercase tracking-wider">
+                                            ${charNameA}
+                                        </button>
+                                        <button onclick="switchRole('${item.id}', 'B')" class="${!isA ? 'bg-emerald-600 text-white' : 'text-slate-400 hover:bg-slate-100'} px-3 py-1 rounded-lg text-[10px] font-black transition-all uppercase tracking-wider">
+                                            ${charNameB}
+                                        </button>
+                                    </div>
+
+                                    <div class="flex items-center gap-1">
+                                        <button id="btn-dl-${item.id}" onclick="generateAndDownloadSingle('${item.id}')" class="p-1.5 text-blue-500 hover:bg-blue-50 rounded-lg transition-all ${!item.text.trim() ? 'opacity-30 pointer-events-none' : ''}">
+                                            <i data-lucide="${item.isLineLoading ? 'loader-2' : 'download'}" class="w-4 h-4 ${item.isLineLoading ? 'animate-spin' : ''}"></i>
+                                        </button>
+                                        <button onclick="removeLine('${item.id}')" class="opacity-0 group-hover:opacity-100 p-1.5 text-slate-400 hover:text-red-500 transition-all">
+                                            <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <textarea
+                                    id="text-${item.id}"
+                                    oninput="handleTextUpdate('${item.id}', this)"
+                                    placeholder="貼上文字自動分行..."
+                                    class="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none shadow-sm transition-all font-medium leading-relaxed resize-none overflow-hidden"
+                                    rows="${Math.max(1, Math.ceil(item.text.length / 40))}"
+                                >${escapeHTML(item.text)}</textarea>
+                                
+                                <div id="audio-box-${item.id}" class="${item.audioUrl ? '' : 'hide'} animate-in slide-in-from-top-2 fade-in duration-300">
+                                    <div class="flex items-center gap-3 bg-indigo-50/50 p-2 rounded-xl border border-indigo-100/50">
+                                        <div class="bg-white p-1.5 rounded-full shadow-sm">
+                                            <i data-lucide="volume-2" class="w-3.5 h-3.5 text-indigo-600"></i>
+                                        </div>
+                                        <audio id="audio-${item.id}" src="${item.audioUrl || ''}" controls class="flex-1 h-8 opacity-80"></audio>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                container.insertAdjacentHTML('beforeend', html);
+            });
+
+            lucide.createIcons();
+            updateButtonsState();
+        }
+
+        function updateButtonsState() {
+            const hasValidText = state.scriptItems.some(i => i.text.trim().length > 0);
+            const btnGen = document.getElementById('btn-generate-all');
+            const btnZip = document.getElementById('btn-zip');
+            
+            if (state.isGenerating || state.isZipping || !hasValidText) {
+                btnGen.classList.replace('bg-indigo-600', 'bg-slate-300');
+                btnGen.classList.replace('hover:bg-indigo-700', 'hover:bg-slate-300');
+                btnGen.classList.remove('shadow-2xl');
+                btnGen.disabled = true;
+                btnZip.disabled = true;
+            } else {
+                btnGen.classList.replace('bg-slate-300', 'bg-indigo-600');
+                btnGen.classList.replace('hover:bg-slate-300', 'hover:bg-indigo-700');
+                btnGen.classList.add('shadow-2xl');
+                btnGen.disabled = false;
+                btnZip.disabled = false;
+            }
+        }
+
+        async function fetchAudioPcm(text, voice) {
+            if (!apiKey) throw new Error('請先在上方輸入 Gemini API Key，再產生語音。');
+            for (let attempt = 0; attempt < 3; attempt++) {
+                let response;
+                try {
+                    response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(apiKey)}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            contents: [{parts:[{text}]}],
+                            generationConfig: {responseModalities:['AUDIO'],speechConfig:{voiceConfig:{prebuiltVoiceConfig:{voiceName:voice}}}}
+                        })
+                    });
+                } catch(error) {
+                    if(attempt===2) throw new Error('網路連線失敗，請確認網路或稍後再試。');
+                    await new Promise(r=>setTimeout(r,1000*Math.pow(2,attempt)));
+                    continue;
+                }
+                if (!response.ok) {
+                    let detail='';
+                    try { const payload=await response.json(); detail=payload?.error?.message || ''; } catch(e) {}
+                    if ([401,403].includes(response.status)) throw new Error('API 權限遭拒（'+response.status+'），請確認金鑰、專案是否 Restricted，以及 Gemini TTS 模型使用資格。'+(detail?' '+detail:''));
+                    if (response.status===400 || response.status===404) throw new Error('API 模型或參數不適用（'+response.status+'）。'+(detail?' '+detail:''));
+                    if ([429,500,502,503,504].includes(response.status) && attempt<2) {
+                        showMessage('Gemini 語音服務忙碌，稍後自動重試 '+(attempt+2)+'/3 次。',false);
+                        await new Promise(r=>setTimeout(r,1200*Math.pow(2,attempt)));
+                        continue;
+                    }
+                    throw new Error('Gemini 語音服務回應失敗（'+response.status+'）。'+(detail?' '+detail:''));
+                }
+                const result=await response.json();
+                const parts=result?.candidates?.[0]?.content?.parts || [];
+                const audioPart=parts.find(part=>part.inlineData)?.inlineData;
+                if(!audioPart?.data) throw new Error('模型沒有回傳音訊，請檢查 TTS 模型是否可用。');
+                const sampleRate=parseInt(audioPart.mimeType?.match(/rate=(\d+)/)?.[1] || '24000');
+                const binary=atob(audioPart.data);
+                const bytes=Uint8Array.from(binary,c=>c.charCodeAt(0));
+                return {bytes,sampleRate};
+            }
+            throw new Error('已重試三次，語音服務仍忙碌。');
+        }
+
+        function pcmToWavBlob(pcmSegments, sampleRate) {
+            const totalPcmLength = pcmSegments.reduce((acc, curr) => acc + curr.length, 0);
+            const buffer = new ArrayBuffer(44 + totalPcmLength);
+            const view = new DataView(buffer);
+            const writeString = (offset, string) => {
+                for (let i = 0; i < string.length; i++) view.setUint8(offset + i, string.charCodeAt(i));
+            };
+            writeString(0, 'RIFF');
+            view.setUint32(4, 32 + totalPcmLength, true);
+            writeString(8, 'WAVE');
+            writeString(12, 'fmt ');
+            view.setUint32(16, 16, true);
+            view.setUint16(20, 1, true);
+            view.setUint16(22, 1, true);
+            view.setUint32(24, sampleRate, true);
+            view.setUint32(28, sampleRate * 2, true);
+            view.setUint16(32, 2, true);
+            view.setUint16(34, 16, true);
+            writeString(36, 'data');
+            view.setUint32(40, totalPcmLength, true);
+            let offset = 44;
+            for (const segment of pcmSegments) {
+                const uint8Segment = new Uint8Array(segment);
+                for (let i = 0; i < uint8Segment.length; i++) view.setUint8(offset + i, uint8Segment[i]);
+                offset += uint8Segment.length;
+            }
+            return new Blob([buffer], { type: 'audio/wav' });
+        }
+
+        // 單行語音生成核心邏輯
+        async function generateLineVoice(id) {
+            const item = state.scriptItems.find(i => i.id === id);
+            if (!item || !item.text.trim()) return null;
+            if (item.audioBlob) return { blob: item.audioBlob, bytes: new Uint8Array(await item.audioBlob.arrayBuffer()).slice(44), rate: 24000 };
+
+            item.isLineLoading = true;
+            renderScriptList();
+
+            try {
+                // 確保取得的是「角色設定中最新選擇的聲音」
+                const voice = item.speaker === 'A' ? state.charA.voice : state.charB.voice;
+                const res = await fetchAudioPcm(item.text, voice);
+                
+                if (!res) throw new Error("生成失敗，API 無回應");
+                
+                const blob = pcmToWavBlob([res.bytes], res.sampleRate);
+                const url = URL.createObjectURL(blob);
+                
+                item.audioUrl = url;
+                item.audioBlob = blob;
+                item.isLineLoading = false;
+                renderScriptList();
+                
+                return { blob, bytes: res.bytes, rate: res.sampleRate };
+            } catch (error) {
+                item.isLineLoading = false;
+                renderScriptList();
+                showMessage(error.message || "生成語音時發生錯誤");
+                return null;
+            }
+        }
+
+        // 單獨下載按鈕
+        window.generateAndDownloadSingle = async function(id) {
+            const item = state.scriptItems.find(i => i.id === id);
+            if(!item || !item.text.trim()) return;
+            
+            const res = await generateLineVoice(id);
+            if (res) {
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(res.blob);
+                a.download = `${item.speaker}_${item.text.slice(0, 5)}.wav`;
+                a.click();
+            }
+        };
+
+        window.downloadAllAsZip = async function() {
+            if (typeof window.JSZip === 'undefined') {
+                showMessage("JSZip 函式庫尚未載入");
+                return;
+            }
+            
+            const validItems = state.scriptItems.filter(item => item.text.trim().length > 0);
+            if (validItems.length === 0) return;
+
+            state.isZipping = true;
+            updateButtonsState();
+            const iconZip = document.getElementById('icon-zip');
+            const textZip = document.getElementById('text-zip');
+            iconZip.setAttribute('data-lucide', 'loader-2');
+            iconZip.classList.add('animate-spin');
+            textZip.innerText = "打包中...";
+            lucide.createIcons();
+
+            try {
+                const zip = new window.JSZip();
+                const folder = zip.folder("個別語音檔");
+
+                for (let i = 0; i < validItems.length; i++) {
+                    const item = validItems[i];
+                    let blob = item.audioBlob;
+                    
+                    if (!blob) {
+                        const res = await generateLineVoice(item.id);
+                        if (res) blob = res.blob;
+                    }
+
+                    if (blob) {
+                        const fileName = `${String(i + 1).padStart(3, '0')}_${item.speaker}_${item.text.slice(0, 10).replace(/[\\/:*?"<>|]/g, "")}.wav`;
+                        folder.file(fileName, blob);
+                    }
+                }
+
+                const content = await zip.generateAsync({ type: "blob" });
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(content);
+                link.download = `教材語音打包_${new Date().getTime()}.zip`;
+                link.click();
+            } catch (err) {
+                showMessage("打包ZIP時發生錯誤");
+            }
+
+            state.isZipping = false;
+            iconZip.setAttribute('data-lucide', 'archive');
+            iconZip.classList.remove('animate-spin');
+            textZip.innerText = "打包 ZIP";
+            updateButtonsState();
+            lucide.createIcons();
+        };
+
+        window.handleGenerateMerge = async function() {
+            const validItems = state.scriptItems.filter(item => item.text.trim().length > 0);
+            if (validItems.length === 0) return;
+
+            state.isGenerating = true;
+            updateButtonsState();
+            document.getElementById('result-section').classList.add('hide');
+            
+            const iconGen = document.getElementById('icon-generate');
+            const textGen = document.getElementById('text-generate');
+            iconGen.setAttribute('data-lucide', 'loader-2');
+            iconGen.classList.add('animate-spin');
+            lucide.createIcons();
+
+            const allPcmData = [];
+            let commonSampleRate = 24000;
+
+            try {
+                for (let i = 0; i < validItems.length; i++) {
+                    textGen.innerText = `正在合成並更新預覽 (${i + 1}/${validItems.length})...`;
+                    
+                    const item = validItems[i];
+                    let pcmBytes = null;
+                    
+                    if (!item.audioBlob) {
+                        const res = await generateLineVoice(item.id);
+                        if (res) {
+                            pcmBytes = res.bytes;
+                            commonSampleRate = res.rate;
+                        }
+                    } else {
+                        const arrayBuffer = await item.audioBlob.arrayBuffer();
+                        pcmBytes = new Uint8Array(arrayBuffer.slice(44));
+                    }
+
+                    if (pcmBytes) {
+                        allPcmData.push(pcmBytes);
+                    }
+                }
+
+                if (allPcmData.length > 0) {
+                    const mergedBlob = pcmToWavBlob(allPcmData, commonSampleRate);
+                    const url = URL.createObjectURL(mergedBlob);
+                    
+                    // 顯示結果區塊
+                    const resSec = document.getElementById('result-section');
+                    document.getElementById('result-stats').innerText = `共 ${validItems.length} 句對話 | ${new Date().toLocaleTimeString()}`;
+                    document.getElementById('result-audio').src = url;
+                    document.getElementById('result-download').href = url;
+                    resSec.classList.remove('hide');
+                }
+            } catch (err) {
+                showMessage("合併語音時發生錯誤");
+            }
+
+            state.isGenerating = false;
+            iconGen.setAttribute('data-lucide', 'volume-2');
+            iconGen.classList.remove('animate-spin');
+            textGen.innerText = "合成單一合併音檔";
+            updateButtonsState();
+            lucide.createIcons();
+        };
+
+        // 啟動應用程式
+        window.onload = initApp;
+
+    </script>
+<script>
+/* 懸浮選單：拖曳、收合、跨頁保存位置、邊界保護 */
+(()=>{
+ const wrap=document.getElementById('ygj-menu');
+ const btn=document.getElementById('ygj-trigger');
+ const panel=document.getElementById('ygj-panel');
+ if(!wrap||!btn||!panel)return;
+ const KEY='ygj-mascot-menu-position-v1';
+ let pointer=null, dragged=false, blockClick=false;
+ const storageGet=()=>{try{return JSON.parse(localStorage.getItem(KEY)||'null')}catch{return null}};
+ const storageSet=obj=>{try{localStorage.setItem(KEY,JSON.stringify(obj))}catch{}};
+ const bounds=()=>({w:wrap.offsetWidth,h:wrap.offsetHeight});
+ function place(x,y){
+   const {w,h}=bounds();
+   x=Math.max(8,Math.min(innerWidth-w-8,x));
+   y=Math.max(8,Math.min(innerHeight-h-8,y));
+   wrap.style.setProperty('left',x+'px','important');
+   wrap.style.setProperty('top',y+'px','important');
+   wrap.style.setProperty('right','auto','important');
+   wrap.style.setProperty('bottom','auto','important');
+   positionPanel();
+ }
+ function positionPanel(){
+   const r=wrap.getBoundingClientRect();
+   panel.classList.toggle('ygj-panel-left',r.left+r.width/2<innerWidth/2);
+   panel.classList.toggle('ygj-panel-below',r.top<Math.min(350,innerHeight*.55));
+ }
+ function save(){const r=wrap.getBoundingClientRect();storageSet({x:r.left/Math.max(1,innerWidth-r.width),y:r.top/Math.max(1,innerHeight-r.height)});}
+ function restore(){const pos=storageGet();const {w,h}=bounds();if(pos&&Number.isFinite(pos.x)&&Number.isFinite(pos.y))place(pos.x*(innerWidth-w),pos.y*(innerHeight-h));else place(innerWidth-w-18,innerHeight-h-18)}
+ const close=()=>{panel.hidden=true;btn.setAttribute('aria-expanded','false');btn.setAttribute('aria-label','展開 AI 工具選單')};
+ btn.setAttribute('aria-label','展開 AI 工具選單；按住可移動位置');
+ btn.addEventListener('pointerdown',e=>{
+   if(e.button!==0||pointer!==null)return;
+   const r=wrap.getBoundingClientRect();
+   pointer={id:e.pointerId,startX:e.clientX,startY:e.clientY,left:r.left,top:r.top};dragged=false;
+   try{btn.setPointerCapture(e.pointerId)}catch{}
+ });
+ btn.addEventListener('pointermove',e=>{
+   if(!pointer||e.pointerId!==pointer.id)return;
+   const dx=e.clientX-pointer.startX,dy=e.clientY-pointer.startY;
+   if(!dragged&&Math.hypot(dx,dy)<7)return;
+   if(!dragged){dragged=true;close();wrap.classList.add('ygj-dragging')}
+   place(pointer.left+dx,pointer.top+dy);
+   e.preventDefault();
+ });
+ const end=e=>{
+   if(!pointer||e.pointerId!==pointer.id)return;
+   if(dragged){save();blockClick=true;setTimeout(()=>blockClick=false,180)}
+   wrap.classList.remove('ygj-dragging');pointer=null;dragged=false;
+   try{btn.releasePointerCapture(e.pointerId)}catch{}
+ };
+ btn.addEventListener('pointerup',end);btn.addEventListener('pointercancel',end);
+ btn.addEventListener('click',e=>{
+   if(blockClick){e.preventDefault();e.stopPropagation();return}
+   panel.hidden=!panel.hidden;btn.setAttribute('aria-expanded',String(!panel.hidden));
+   if(!panel.hidden)positionPanel();
+ });
+ document.addEventListener('pointerdown',e=>{if(!wrap.contains(e.target))close()});
+ document.addEventListener('keydown',e=>{if(e.key==='Escape')close()});
+ addEventListener('resize',()=>{const r=wrap.getBoundingClientRect();place(r.left,r.top);save()});
+ restore();close();
+})();
+</script>
+</body>
+</html>

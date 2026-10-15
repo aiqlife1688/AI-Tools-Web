@@ -1,0 +1,3355 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>圖音合併工具｜楊貴傑老師製作</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <style>
+    :root {
+      --bg:       #0d1117;
+      --bg2:      #161b22;
+      --bg3:      #21262d;
+      --border:   #30363d;
+      --accent:   #7c3aed;
+      --accent2:  #a78bfa;
+      --accent3:  #c4b5fd;
+      --text:     #e2e8f0;
+      --text2:    #8b949e;
+      --success:  #3fb950;
+      --warning:  #d29922;
+      --danger:   #f85149;
+      --info:     #58a6ff;
+      --grad: linear-gradient(135deg, #7c3aed, #3b82f6, #06b6d4);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Microsoft JhengHei', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      line-height: 1.6;
+    }
+
+    /* ── Header ─────────────────────────────────────────── */
+    header {
+      position: relative;
+      overflow: hidden;
+      padding: 2.5rem 2rem 2rem;
+      text-align: center;
+      background: linear-gradient(160deg, #0d0520 0%, #12062e 50%, #0d1117 100%);
+      border-bottom: 1px solid var(--border);
+    }
+    header::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse 80% 60% at 50% 0%, rgba(124,58,237,.18) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    header h1 {
+      font-size: clamp(1.8rem, 4vw, 2.8rem);
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      background: var(--grad);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      position: relative;
+    }
+    header h1 i { margin-right: .5rem; }
+    header .tagline {
+      color: var(--text2);
+      font-size: .92rem;
+      margin-top: .45rem;
+      position: relative;
+    }
+    header .tagline a {
+      color: var(--accent3);
+      text-decoration: none;
+      font-weight: 600;
+      transition: color .2s;
+    }
+    header .tagline a:hover { color: #fff; text-decoration: underline; }
+
+    /* ── Layout ──────────────────────────────────────────── */
+    main {
+      max-width: 1360px;
+      margin: 0 auto;
+      padding: 1.75rem 1.25rem 3rem;
+    }
+    .two-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.25rem;
+      margin-bottom: 1.25rem;
+    }
+    @media (max-width: 720px) { .two-col { grid-template-columns: 1fr; } }
+
+    /* ── Cards ───────────────────────────────────────────── */
+    .card {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 1.4rem;
+    }
+    .card-title {
+      display: flex;
+      align-items: center;
+      gap: .55rem;
+      font-size: .95rem;
+      font-weight: 700;
+      color: var(--accent3);
+      margin-bottom: 1rem;
+    }
+    .card-title .count {
+      font-weight: 400;
+      font-size: .8rem;
+      color: var(--text2);
+    }
+
+    /* ── Drop Zone ───────────────────────────────────────── */
+    .drop-zone {
+      border: 2px dashed var(--border);
+      border-radius: 10px;
+      padding: 1.6rem 1rem;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color .2s, background .2s;
+      color: var(--text2);
+      font-size: .88rem;
+    }
+    .drop-zone:hover, .drop-zone.dragover {
+      border-color: var(--accent);
+      background: rgba(124,58,237,.08);
+      color: var(--text);
+    }
+    .drop-zone i.big { font-size: 2rem; display: block; margin-bottom: .4rem; }
+    .drop-zone input[type=file] { display: none; }
+    .drop-zone .hint { font-size: .76rem; margin-top: .25rem; opacity: .7; }
+
+    /* ── File List ───────────────────────────────────────── */
+    .file-list {
+      margin-top: .9rem;
+      max-height: 390px;
+      overflow-y: auto;
+      padding-right: 2px;
+    }
+    .file-list:empty::after {
+      content: '尚未匯入';
+      display: block;
+      text-align: center;
+      color: var(--text2);
+      font-size: .8rem;
+      padding: .5rem 0;
+    }
+    .file-item {
+      display: flex;
+      align-items: center;
+      gap: .7rem;
+      padding: .55rem .7rem;
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      margin-bottom: .4rem;
+      background: var(--bg3);
+      cursor: grab;
+      user-select: none;
+      transition: border-color .15s, background .15s, opacity .15s;
+    }
+    .file-item:active { cursor: grabbing; }
+    .file-item:hover { border-color: #4a3070; }
+    .file-item.dragging { opacity: .35; border-style: dashed; }
+    .file-item.drag-over {
+      border-color: var(--accent2);
+      background: rgba(167,139,250,.12);
+      border-style: dashed;
+    }
+    .file-item .grip {
+      color: var(--border);
+      font-size: .85rem;
+      flex-shrink: 0;
+      cursor: grab;
+    }
+    .file-item .thumb {
+      width: 60px;
+      height: 45px;
+      object-fit: cover;
+      border-radius: 5px;
+      flex-shrink: 0;
+      background: var(--bg);
+    }
+    .file-item .audio-ico {
+      width: 60px;
+      height: 45px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(124,58,237,.18);
+      border-radius: 5px;
+      flex-shrink: 0;
+      color: var(--accent3);
+      font-size: 1.35rem;
+    }
+    .file-item .info { flex: 1; min-width: 0; }
+    .file-item .info .name {
+      font-size: .82rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      font-weight: 500;
+    }
+    .file-item .info .meta { font-size: .72rem; color: var(--text2); }
+    .file-item .num {
+      background: rgba(124,58,237,.25);
+      color: var(--accent3);
+      border-radius: 5px;
+      padding: .1rem .45rem;
+      font-size: .72rem;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+    .file-item .btn-del {
+      background: none;
+      border: none;
+      color: var(--text2);
+      cursor: pointer;
+      padding: .25rem;
+      border-radius: 5px;
+      flex-shrink: 0;
+      line-height: 1;
+      transition: color .15s, background .15s;
+    }
+    .file-item .btn-del:hover { color: var(--danger); background: rgba(248,81,73,.12); }
+
+    /* ── Recording and Custom Badges ────────────────────────── */
+    .badge-rec {
+      display: inline-block;
+      background: rgba(248, 81, 73, 0.15);
+      border: 1px solid rgba(248, 81, 73, 0.4);
+      color: var(--danger);
+      font-size: 0.65rem;
+      padding: 0.05rem 0.35rem;
+      border-radius: 4px;
+      margin-left: 0.35rem;
+      font-weight: bold;
+    }
+    .fa-beat-fade {
+      animation: beat-fade 1.2s infinite;
+    }
+    @keyframes beat-fade {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.3; transform: scale(0.9); }
+    }
+
+    /* ── Action Buttons ──────────────────────────────────── */
+    .list-actions {
+      display: flex;
+      gap: .5rem;
+      margin-top: .55rem;
+    }
+    .btn-sm {
+      font-size: .76rem;
+      padding: .3rem .75rem;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: var(--bg3);
+      color: var(--text);
+      cursor: pointer;
+      transition: border-color .15s, color .15s, background-color .15s;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+    }
+    .btn-sm:hover { border-color: var(--accent); background: rgba(124,58,237,.1); }
+
+    /* ── Pair Info ───────────────────────────────────────── */
+    .pair-info {
+      margin-bottom: 1.25rem;
+    }
+    .pair-banner {
+      background: rgba(63,185,80,.08);
+      border: 1px solid rgba(63,185,80,.25);
+      border-radius: 10px;
+      padding: .75rem 1.1rem;
+      font-size: .86rem;
+      color: var(--success);
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: .75rem;
+    }
+    .pair-banner .warn { color: var(--warning); }
+
+    /* ── Settings ────────────────────────────────────────── */
+    .settings-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 1.3rem;
+    }
+    .setting-row { display: flex; flex-direction: column; gap: .55rem; }
+    .setting-label {
+      font-size: .82rem;
+      font-weight: 600;
+      color: var(--text2);
+      text-transform: uppercase;
+      letter-spacing: .06em;
+    }
+
+    /* Transition buttons */
+    .trans-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: .55rem;
+    }
+    .trans-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: .3rem;
+      padding: .7rem .9rem;
+      border: 2px solid var(--border);
+      border-radius: 10px;
+      background: var(--bg3);
+      color: var(--text);
+      cursor: pointer;
+      font-size: .8rem;
+      transition: border-color .15s, background .15s, color .15s;
+      min-width: 80px;
+    }
+    .trans-btn .ti { font-size: 1.4rem; }
+    .trans-btn:hover { border-color: var(--accent); }
+    .trans-btn.active {
+      border-color: var(--accent2);
+      background: rgba(124,58,237,.2);
+      color: var(--accent3);
+    }
+
+    /* Duration buttons */
+    .dur-btns { display: flex; gap: .5rem; flex-wrap: wrap; }
+    .dur-btn {
+      padding: .35rem .9rem;
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      background: var(--bg3);
+      color: var(--text2);
+      cursor: pointer;
+      font-size: .84rem;
+      transition: border-color .15s, color .15s, background .15s;
+    }
+    .dur-btn:hover { border-color: var(--accent); color: var(--text); }
+    .dur-btn.active {
+      border-color: var(--accent2);
+      background: rgba(124,58,237,.2);
+      color: var(--accent3);
+    }
+
+    /* Resolution buttons */
+    .res-btns { display: flex; gap: .75rem; flex-wrap: wrap; }
+    .res-btn {
+      flex: 1;
+      min-width: 110px;
+      padding: .7rem 1rem;
+      border: 2px solid var(--border);
+      border-radius: 10px;
+      background: var(--bg3);
+      color: var(--text);
+      cursor: pointer;
+      text-align: center;
+      transition: border-color .15s, background .15s, color .15s;
+    }
+    .res-btn:hover { border-color: var(--accent); }
+    .res-btn.active {
+      border-color: var(--accent2);
+      background: rgba(124,58,237,.2);
+      color: var(--accent3);
+    }
+    .res-btn .rl { font-size: 1.15rem; font-weight: 800; }
+    .res-btn .rs { font-size: .72rem; color: var(--text2); margin-top: .1rem; }
+    .res-btn.active .rs { color: var(--accent3); }
+    .badge-slow {
+      display: inline-block;
+      background: rgba(210,153,34,.18);
+      border: 1px solid rgba(210,153,34,.4);
+      color: var(--warning);
+      font-size: .68rem;
+      padding: .05rem .35rem;
+      border-radius: 4px;
+      margin-left: .3rem;
+    }
+
+    /* ── Export ──────────────────────────────────────────── */
+    .export-wrap { text-align: center; }
+    .status-box {
+      padding: .7rem 1rem;
+      border-radius: 8px;
+      font-size: .85rem;
+      margin-bottom: 1rem;
+      display: none;
+      text-align: left;
+    }
+    .status-box.show { display: block; }
+    .status-box.info   { background: rgba(88,166,255,.1); border: 1px solid rgba(88,166,255,.3); color: var(--info); }
+    .status-box.error  { background: rgba(248,81,73,.1);  border: 1px solid rgba(248,81,73,.3);  color: var(--danger); }
+    .status-box.ok     { background: rgba(63,185,80,.1);  border: 1px solid rgba(63,185,80,.3);  color: var(--success); }
+
+    .progress-wrap { margin-bottom: 1.2rem; display: none; }
+    .progress-wrap.show { display: block; }
+    .progress-track {
+      width: 100%;
+      height: 8px;
+      background: var(--bg3);
+      border-radius: 4px;
+      overflow: hidden;
+      margin-bottom: .4rem;
+    }
+    .progress-fill {
+      height: 100%;
+      background: var(--grad);
+      border-radius: 4px;
+      transition: width .12s linear;
+      width: 0%;
+    }
+    .progress-label { font-size: .82rem; color: var(--text2); }
+
+    .btn-export {
+      display: inline-flex;
+      align-items: center;
+      gap: .7rem;
+      padding: .9rem 2.8rem;
+      border: none;
+      border-radius: 10px;
+      background: var(--grad);
+      color: #fff;
+      font-size: 1.05rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform .2s, box-shadow .2s, opacity .2s;
+      letter-spacing: .01em;
+    }
+    .btn-export:hover:not(:disabled) {
+      transform: translateY(-3px);
+      box-shadow: 0 10px 30px rgba(124,58,237,.45);
+    }
+    .btn-export:active:not(:disabled) { transform: translateY(0); }
+    .btn-export:disabled { opacity: .55; cursor: not-allowed; }
+
+    .btn-book {
+      display: inline-flex;
+      align-items: center;
+      gap: .7rem;
+      padding: .9rem 2.8rem;
+      border: none;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #0891b2 0%, #06b6d4 100%);
+      color: #fff;
+      font-size: 1.05rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform .2s, box-shadow .2s, opacity .2s;
+      letter-spacing: .01em;
+    }
+    .btn-book:hover:not(:disabled) {
+      transform: translateY(-3px);
+      box-shadow: 0 10px 30px rgba(6,182,212,.45);
+    }
+    .btn-book:active:not(:disabled) { transform: translateY(0); }
+    .btn-book:disabled { opacity: .55; cursor: not-allowed; }
+
+    .export-note {
+      font-size: .78rem;
+      color: var(--text2);
+      margin-top: .9rem;
+      line-height: 1.7;
+    }
+
+    /* ── Export Overlay (Ant-Throttling) ────────────────── */
+    .export-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(13, 17, 23, 0.95);
+      z-index: 9999;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+      text-align: center;
+    }
+    .export-overlay.show { display: flex; }
+    .export-overlay .spinner {
+      font-size: 3rem;
+      color: var(--accent2);
+      margin-bottom: 1.5rem;
+      animation: spin 1s linear infinite;
+    }
+    .export-overlay h2 {
+      font-size: 1.5rem;
+      color: #fff;
+      margin-bottom: 1rem;
+    }
+    .export-overlay p {
+      color: var(--warning);
+      font-weight: bold;
+      max-width: 500px;
+      margin-bottom: 1.5rem;
+    }
+    .export-overlay .prog-box {
+      width: 100%;
+      max-width: 400px;
+    }
+    @keyframes spin { from {transform:rotate(0deg);} to {transform:rotate(360deg);} }
+
+    /* ── Preview canvas (hidden) ─────────────────────────── */
+    #export-canvas {
+      position: fixed;
+      left: -99999px;
+      top: -99999px;
+      pointer-events: none;
+    }
+
+    /* ── Footer ──────────────────────────────────────────── */
+    footer {
+      background: var(--bg2);
+      border-top: 1px solid var(--border);
+      padding: 2rem 1.5rem;
+      text-align: center;
+      color: var(--text2);
+      font-size: .84rem;
+    }
+    footer a { color: var(--accent3); text-decoration: none; }
+    footer a:hover { text-decoration: underline; }
+    .cc-block {
+      display: inline-block;
+      margin-top: 1rem;
+      padding: .9rem 1.4rem;
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      max-width: 580px;
+      text-align: left;
+      font-size: .82rem;
+      line-height: 1.7;
+    }
+    .cc-block .cc-title {
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: .35rem;
+      display: flex;
+      align-items: center;
+      gap: .45rem;
+    }
+    .cc-icons { font-size: 1.1rem; }
+
+    /* ── Mode Selector ─────────────────────────────────── */
+    .mode-btns {
+      display: grid; grid-template-columns: 1fr 1fr; gap: .75rem;
+    }
+    @media (max-width: 580px) { .mode-btns { grid-template-columns: 1fr; } }
+    .mode-btn {
+      display: flex; flex-direction: column; align-items: flex-start;
+      gap: .3rem; padding: 1rem 1.1rem;
+      border: 2px solid var(--border); border-radius: 10px;
+      background: var(--bg3); color: var(--text);
+      cursor: pointer; text-align: left; width: 100%;
+      transition: border-color .2s, background .2s;
+    }
+    .mode-btn i { font-size: 1.3rem; color: var(--accent2); }
+    .mode-btn strong { font-size: .9rem; display: block; }
+    .mode-btn .desc { font-size: .76rem; color: var(--text2); line-height: 1.4; }
+    .mode-btn:hover { border-color: var(--accent); }
+    .mode-btn.active { border-color: var(--accent2); background: rgba(124,58,237,.15); }
+    .mode-btn.active i { color: var(--accent3); }
+    .mode-btn.active .desc { color: rgba(196,181,253,.8); }
+
+    /* Repeat control */
+    .repeat-ctrl { display: none; align-items: center; gap: .22rem; flex-shrink: 0; }
+    #audio-list.bgm .repeat-ctrl { display: flex; }
+    #audio-list.bgm .file-item .num { display: none; }
+    .repeat-btn {
+      width: 22px; height: 22px;
+      border: 1px solid var(--border); border-radius: 4px;
+      background: var(--bg2); color: var(--text); cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      font-size: .85rem; line-height: 1; transition: border-color .15s, background .15s;
+    }
+    .repeat-btn:hover { border-color: var(--accent); background: rgba(124,58,237,.18); }
+    .repeat-val { font-size: .76rem; font-weight: 700; color: var(--accent3); min-width: 22px; text-align: center; }
+    .repeat-label { font-size: .68rem; color: var(--text2); }
+
+    /* Disabled setting row */
+    .setting-row.row-disabled { opacity: .38; pointer-events: none; }
+
+    /* BGM info banner */
+    .bgm-banner {
+      background: rgba(59,130,246,.08); border: 1px solid rgba(59,130,246,.3);
+      border-radius: 10px; padding: .75rem 1.1rem;
+      font-size: .86rem; color: #93c5fd;
+      display: flex; align-items: center; flex-wrap: wrap; gap: .75rem;
+    }
+    .bgm-banner strong { color: #bfdbfe; }
+
+    /* Time-distribution card */
+    .time-card {
+      display: grid;
+      grid-template-columns: 16px 30px 72px minmax(0,1fr) auto;
+      align-items: center; gap: .6rem; padding: .55rem .85rem;
+      background: var(--bg3); border: 1px solid var(--border);
+      border-left: 3px solid #3b82f6; border-radius: 9px;
+      cursor: grab; user-select: none;
+      transition: border-color .15s, background .15s, opacity .15s;
+    }
+    .time-card:hover { border-color: #60a5fa; background: rgba(59,130,246,.07); }
+    .time-card:active { cursor: grabbing; }
+    .time-card.dragging { opacity: .28; border-style: dashed; }
+    .time-card.drag-over { background: rgba(59,130,246,.14); border-color: #60a5fa; border-style: dashed; }
+    .time-card .tc-grip { color: var(--border); font-size: .8rem; justify-self: center; }
+    .time-card .tc-num {
+      background: #2563eb; color: #fff; border-radius: 5px;
+      padding: .12rem .35rem; font-size: .7rem; font-weight: 800; text-align: center;
+    }
+    .time-card .tc-thumb { width: 72px; height: 54px; object-fit: cover; border-radius: 5px; background: var(--bg); display: block; }
+    .time-card .tc-iside { min-width: 0; }
+    .time-card .tc-iname { font-size: .81rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .time-card .tc-imeta { font-size: .7rem; color: var(--text2); }
+    .time-card .tc-dur {
+      background: rgba(37,99,235,.2); border: 1px solid rgba(96,165,250,.4);
+      color: #93c5fd; border-radius: 6px; padding: .15rem .5rem;
+      font-size: .76rem; font-weight: 700; white-space: nowrap; flex-shrink: 0;
+    }
+    @media (max-width: 580px) {
+      .time-card { grid-template-columns: 14px 26px 52px minmax(0,1fr) auto; gap: .4rem; padding: .45rem .6rem; }
+      .time-card .tc-thumb { width: 52px; height: 39px; }
+    }
+
+    /* ── Pair Preview ───────────────────────────────────── */
+    #pair-preview { display: none; margin-bottom: 1.25rem; }
+
+    .pair-preview-hd {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: .55rem;
+      font-size: .95rem;
+      font-weight: 700;
+      color: var(--accent3);
+      margin-bottom: .9rem;
+    }
+    .pair-preview-hd .psub { font-size: .8rem; font-weight: 400; color: var(--text2); }
+    .pair-preview-hd .phint {
+      margin-left: auto;
+      font-size: .74rem;
+      font-weight: 400;
+      color: var(--text2);
+    }
+
+    .pair-list { display: flex; flex-direction: column; gap: .4rem; }
+
+    .pair-card {
+      display: grid;
+      grid-template-columns: 16px 30px 72px minmax(0,1fr) 26px 22px minmax(0,1fr);
+      align-items: center;
+      gap: .6rem;
+      padding: .55rem .85rem;
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--accent);
+      border-radius: 9px;
+      cursor: grab;
+      user-select: none;
+      transition: border-color .15s, background .15s, opacity .15s, box-shadow .15s;
+    }
+    .pair-card:hover {
+      border-color: var(--accent2);
+      background: rgba(124,58,237,.07);
+      box-shadow: 0 2px 12px rgba(124,58,237,.12);
+    }
+    .pair-card:active { cursor: grabbing; }
+    .pair-card.dragging { opacity: .28; border-style: dashed; }
+    .pair-card.drag-over {
+      background: rgba(167,139,250,.14);
+      border-color: var(--accent2);
+      border-style: dashed;
+      box-shadow: 0 0 0 2px rgba(167,139,250,.25);
+    }
+
+    .pair-card .pc-grip { color: var(--border); font-size: .8rem; justify-self: center; }
+    .pair-card .pc-num {
+      background: var(--accent);
+      color: #fff;
+      border-radius: 5px;
+      padding: .12rem .35rem;
+      font-size: .7rem;
+      font-weight: 800;
+      text-align: center;
+    }
+    .pair-card .pc-thumb {
+      width: 72px; height: 54px;
+      object-fit: cover;
+      border-radius: 5px;
+      background: var(--bg);
+      display: block;
+    }
+    .pair-card .pc-iside { min-width: 0; }
+    .pair-card .pc-iside .pc-iname {
+      font-size: .81rem;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .pair-card .pc-iside .pc-imeta { font-size: .7rem; color: var(--text2); }
+    .pair-card .pc-arrow {
+      color: var(--accent2);
+      font-size: .9rem;
+      justify-self: center;
+    }
+    .pair-card .pc-aico {
+      color: var(--accent3);
+      font-size: 1rem;
+      justify-self: center;
+    }
+    .pair-card .pc-aside { min-width: 0; }
+    .pair-card .pc-aside .pc-aname {
+      font-size: .81rem;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .pair-card .pc-aside .pc-adur { font-size: .7rem; color: var(--text2); }
+
+    .unpaired-section { margin-top: .8rem; }
+    .unpaired-label {
+      font-size: .75rem; color: var(--warning);
+      margin-bottom: .35rem;
+      display: flex; align-items: center; gap: .3rem;
+    }
+    .unpaired-item {
+      display: flex; align-items: center; gap: .55rem;
+      padding: .38rem .65rem;
+      background: rgba(210,153,34,.06);
+      border: 1px dashed rgba(210,153,34,.3);
+      border-radius: 7px;
+      margin-bottom: .28rem;
+      font-size: .79rem; color: var(--text2);
+    }
+    .unpaired-item img { width: 48px; height: 36px; object-fit: cover; border-radius: 4px; flex-shrink:0; }
+    .unpaired-item .ui-ico { color: var(--warning); flex-shrink:0; }
+    .unpaired-item .ui-dur { margin-left: auto; font-size: .7rem; }
+
+    @media (max-width: 580px) {
+      .pair-card {
+        grid-template-columns: 14px 26px 52px minmax(0,1fr) 20px 18px minmax(0,1fr);
+        gap: .4rem; padding: .45rem .6rem;
+      }
+      .pair-card .pc-thumb { width: 52px; height: 39px; }
+    }
+
+    /* ── Scrollbar ───────────────────────────────────────── */
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-track { background: var(--bg2); }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+
+    /* ── Unified Recording & Playback Overlay ────────────── */
+    .rec-modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(10, 12, 16, 0.98);
+      z-index: 10000;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+      backdrop-filter: blur(8px);
+    }
+    .rec-modal.show { display: flex; }
+    .rec-modal-content {
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 18px;
+      padding: 1.5rem;
+      max-width: 950px;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 1.2rem;
+      box-shadow: 0 25px 60px rgba(0,0,0,0.8);
+      position: relative;
+    }
+    .rec-modal-header {
+      display: flex;
+      width: 100%;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 0.75rem;
+    }
+    .rec-modal-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--accent3);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 0;
+    }
+    .rec-modal-img-wrap {
+      width: 100%;
+      background: #090d13;
+      border-radius: 12px;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid var(--border);
+      position: relative;
+      height: 48vh;
+      min-height: 220px;
+    }
+    /* ── Image sizing constraint inside recording and preview modal ── */
+    #rec-modal-img, .rec-modal-img {
+      width: 100% !important;
+      height: 100% !important;
+      max-height: 100% !important;
+      max-width: 100% !important;
+      object-fit: contain !important; 
+      display: block;
+    }
+    .modal-ctrl-card {
+      background: #21262d;
+      border: 1px solid #30363d;
+      border-radius: 12px;
+      padding: 1.2rem;
+      width: 100%;
+    }
+    .rec-modal-pulse {
+      width: 12px;
+      height: 12px;
+      background: var(--danger);
+      border-radius: 50%;
+      box-shadow: 0 0 10px var(--danger);
+    }
+    .btn-rec-stop {
+      background: var(--danger);
+      color: #fff;
+      border: none;
+      padding: 0.6rem 1.5rem;
+      border-radius: 8px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: transform 0.15s;
+    }
+    .btn-rec-stop:hover {
+      transform: scale(1.03);
+    }
+    .btn-rec-cancel {
+      background: var(--bg3);
+      color: var(--text2);
+      border: 1px solid var(--border);
+      padding: 0.6rem 1.2rem;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: border-color 0.15s, color 0.15s;
+    }
+    .btn-rec-cancel:hover {
+      border-color: var(--danger);
+      color: var(--danger);
+    }
+
+    /* 彩色亮暗雙佈景：保持所有原有功能及選擇器 */
+    :root {
+      --bg: #101428; --bg2: #1b2040; --bg3: #272d50;
+      --border: #424772; --accent: #a855f7; --accent2: #d8b4fe;
+      --accent3: #e9d5ff; --text: #f4f4ff; --text2: #c3c5e4;
+      --success: #55e7aa; --warning: #ffcf70; --danger: #ff8197;
+      --info: #75c9ff;
+      --grad: linear-gradient(115deg,#7c3aed,#ec4899,#06b6d4);
+    }
+    body { background: radial-gradient(circle at 12% 0%,rgba(181,72,255,.14),transparent 30%),radial-gradient(circle at 91% 15%,rgba(6,182,212,.12),transparent 28%),var(--bg); }
+    header { background: linear-gradient(125deg,#201b46,#402052,#152f55); }
+    .card { box-shadow: 0 14px 34px rgba(0,0,0,.10); border-radius: 22px; }
+    .btn-sm,.dur-btn,.trans-btn,.res-btn,.mode-btn,.btn-export,.btn-book { border-radius: 13px; }
+    .drop-zone { border-radius: 16px; }
+    :root[data-theme="light"] {
+      --bg:#fff8fc; --bg2:#ffffff; --bg3:#f4f0ff; --border:#ddd2f2;
+      --accent:#8b5cf6; --accent2:#7c3aed; --accent3:#6d28d9;
+      --text:#29223e; --text2:#665a82; --success:#087d50; --warning:#976000;
+      --danger:#cc2448; --info:#126da5;
+      --grad:linear-gradient(115deg,#8b5cf6,#ec4899,#0891b2);
+    }
+    :root[data-theme="light"] body { background:radial-gradient(circle at 5% 3%,rgba(251,113,133,.13),transparent 30%),radial-gradient(circle at 95% 12%,rgba(56,189,248,.14),transparent 31%),var(--bg); }
+    :root[data-theme="light"] header { background: linear-gradient(110deg,#f9e6ff,#e7f5ff,#ffedf2); }
+    :root[data-theme="light"] .card { box-shadow:0 12px 35px rgba(128,76,181,.11); }
+    :root[data-theme="light"] .mode-btn.active .desc { color:#6d28d9; }
+    :root[data-theme="light"] .bgm-banner {color:#1363a1}
+    :root[data-theme="light"] .bgm-banner strong {color:#074b80}
+    :root[data-theme="light"] .time-card .tc-dur {color:#234f9c}
+    :root[data-theme="light"] .rec-modal-content { background:#fff; border-color:var(--border); }
+    :root[data-theme="light"] .modal-ctrl-card { background:var(--bg3); border-color:var(--border); }
+    :root[data-theme="light"] .export-overlay {background:rgba(23,22,49,.96)}
+    .theme-switch { position:absolute;z-index:3;top:15px;right:18px;display:flex;align-items:center;gap:9px;padding:10px 15px;border:1px solid var(--border);border-radius:999px;background:var(--bg2);color:var(--text);cursor:pointer;font-weight:700;box-shadow:0 8px 22px rgba(0,0,0,.15); }
+    .theme-switch:hover {outline:2px solid var(--accent2)}
+    @media(max-width:700px){header{padding-top:5rem}.theme-switch{top:12px;right:12px}}
+
+  
+        /* === 楊貴傑老師 Q版 3D 講師娃娃 & 浮水印 === */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background: url('teacher_mascot.png') center 55% / min(46vw, 420px) no-repeat;
+            opacity: .065;
+            pointer-events: none;
+            z-index: 0;
+            filter: drop-shadow(0 14px 38px rgba(0,0,0,.12));
+        }
+        body > * { position: relative; z-index: 1; }
+        .ygj-floating-brand {
+            position: fixed;
+            right: 18px;
+            bottom: 18px;
+            z-index: 70;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 14px;
+            border-radius: 22px;
+            border: 1px solid rgba(255,255,255,.75);
+            background: rgba(255,255,255,.90);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 14px 34px rgba(39,55,86,.18);
+            max-width: min(92vw, 320px);
+        }
+        .ygj-floating-brand img {
+            width: 66px;
+            height: 66px;
+            border-radius: 18px;
+            object-fit: cover;
+            flex-shrink: 0;
+            background: linear-gradient(135deg,#e0f2fe,#ede9fe,#fef3c7);
+            box-shadow: 0 10px 22px rgba(99,102,241,.18);
+        }
+        .ygj-floating-brand-text { min-width: 0; display:flex; flex-direction:column; }
+        .ygj-floating-brand-text strong { font-size: .98rem; line-height: 1.2; color: #1f2937; }
+        .ygj-floating-brand-text span { font-size: .72rem; color: #6b7280; line-height: 1.3; }
+        .ygj-floating-links { display:flex; flex-wrap:wrap; gap:6px; margin-top:6px; }
+        .ygj-floating-links a {
+            text-decoration: none;
+            font-size: .72rem;
+            font-weight: 800;
+            padding: 4px 9px;
+            border-radius: 999px;
+            background: linear-gradient(135deg,#14b8a6,#f97316,#c026d3);
+            color: white !important;
+            box-shadow: 0 5px 15px rgba(168,85,247,.18);
+            white-space: nowrap;
+        }
+        .ygj-floating-links a:hover { transform: translateY(-1px); opacity: .95; }
+        @media (max-width: 768px) {
+            body::before { background-size: min(70vw, 290px); opacity: .055; background-position: center 50%; }
+            .ygj-floating-brand { right: 10px; bottom: 10px; padding: 8px 10px; gap: 8px; max-width: calc(100vw - 20px); }
+            .ygj-floating-brand img { width: 56px; height: 56px; border-radius: 14px; }
+            .ygj-floating-brand-text strong { font-size: .88rem; }
+            .ygj-floating-brand-text span { font-size: .66rem; }
+        }
+
+    :root[data-theme="dark"] body::before { opacity: .08; }
+    :root[data-theme="light"] body::before { opacity: .055; }
+
+    
+/* 導覽與浮水印精修 */
+body::before {background-image:url('teacher_mascot.png') !important;background-size:clamp(260px,36vw,510px) auto !important;background-position:right 8vw center !important;opacity:.16 !important;filter:contrast(1.08) saturate(.9) !important;}
+body.dark-mode::before,:root[data-theme="dark"] body::before{opacity:.22 !important}
+.ygj-floating-brand {position:fixed !important;right:18px !important;bottom:18px !important;z-index:500 !important;display:block !important;background:none !important;border:0 !important;padding:0 !important;box-shadow:none !important;max-width:none !important;}
+.ygj-trigger{border:1px solid #9b91dc;border-radius:999px;background:linear-gradient(120deg,#483486,#0a7483);box-shadow:0 12px 30px #101a3e55;display:flex;align-items:center;gap:9px;color:white;padding:6px 14px 6px 6px;cursor:pointer;font-size:13px;font-weight:750;}
+.ygj-trigger img{width:44px !important;height:44px !important;object-fit:cover;border-radius:50% !important;border:2px solid white;flex-shrink:0}
+.ygj-panel{position:absolute;right:0;bottom:calc(100% + 10px);width:282px;background:#fbf9ff;border:1px solid #d5caef;border-radius:19px;box-shadow:0 18px 42px #13172b66;padding:15px;display:grid;gap:9px;color:#25254a}
+.ygj-panel[hidden]{display:none !important}
+.ygj-panel-title{display:flex;gap:10px;align-items:center;padding:2px 2px 9px;border-bottom:1px solid #ece6f6}
+.ygj-panel-title img{width:45px !important;height:45px !important;object-fit:cover;border-radius:12px !important;flex-shrink:0}
+.ygj-panel-title b{display:block;font-size:15px;color:#30275d}.ygj-panel-title small{color:#74718a;font-size:11px}
+.ygj-panel a{display:flex;align-items:center;gap:10px;text-decoration:none !important;border:1px solid #e3dff0;border-radius:12px;background:white;color:#312f63 !important;padding:12px;font-size:13px;font-weight:750;transition:background .18s,transform .18s}
+.ygj-panel a:hover{background:#eeeaff;transform:translateX(-2px)}.ygj-panel a.current{background:linear-gradient(110deg,#5b4dca,#0e8b9c);color:white !important;border-color:transparent}
+.ygj-panel a .em{font-size:20px}.ygj-panel-note{text-align:center;font-size:11px;color:#77738e}
+@media(max-width:700px){body::before{background-position:right -12vw center !important;background-size:65vw auto !important;opacity:.14 !important}.ygj-floating-brand{right:10px !important;bottom:10px !important}.ygj-trigger{font-size:12px;padding:5px 12px 5px 5px}.ygj-trigger img{width:38px !important;height:38px !important}.ygj-panel{width:min(282px,calc(100vw - 20px))}}
+
+footer { text-align: left; }
+
+/* Q版老師可移動懸浮入口：原有浮水印與主頁排版不變 */
+#ygj-menu.ygj-floating-brand {
+ position:fixed !important;left:auto !important;top:auto !important;
+ right:18px !important;bottom:18px !important;z-index:1200 !important;
+ width:60px !important;height:60px !important;max-width:none !important;
+ padding:0 !important;background:transparent !important;box-shadow:none !important;
+ touch-action:none;user-select:none;-webkit-user-select:none;
+}
+#ygj-menu .ygj-trigger {
+ width:60px;height:60px;padding:4px !important;border-radius:50% !important;
+ display:grid;place-items:center;gap:0 !important;cursor:grab;touch-action:none;
+ border:2px solid #d9c9ff;background:linear-gradient(135deg,#a78bfa,#0d9488);
+ box-shadow:0 10px 28px rgba(17,34,74,.4),0 0 0 3px rgba(255,255,255,.24);
+}
+#ygj-menu .ygj-trigger:active{cursor:grabbing}
+#ygj-menu .ygj-trigger:focus-visible {outline:3px solid #fbbf24;outline-offset:4px}
+#ygj-menu .ygj-trigger img {width:49px !important;height:49px !important;border:0 !important;border-radius:50% !important;pointer-events:none}
+#ygj-menu .ygj-trigger span {display:none !important}
+#ygj-menu.ygj-dragging .ygj-trigger {box-shadow:0 15px 40px rgba(31,41,92,.45);transform:scale(1.08)}
+#ygj-menu .ygj-panel {left:auto;right:0;bottom:calc(100% + 12px);top:auto;width:282px;touch-action:auto;user-select:text;-webkit-user-select:text}
+#ygj-menu .ygj-panel.ygj-panel-left {left:0;right:auto}
+#ygj-menu .ygj-panel.ygj-panel-below {top:calc(100% + 12px);bottom:auto}
+@media(max-width:700px){#ygj-menu.ygj-floating-brand{width:54px !important;height:54px !important;right:12px !important;bottom:12px !important}#ygj-menu .ygj-trigger{width:54px;height:54px}#ygj-menu .ygj-trigger img{width:45px !important;height:45px !important}#ygj-menu .ygj-panel{width:min(282px,calc(100vw - 24px))}}
+
+
+/* 明暗主題：頁籤、提示區、錄音介面與進度狀態一致配色 */
+:root[data-theme="light"] .card-title,
+:root[data-theme="light"] .rec-modal-title{color:#6131a6}
+:root[data-theme="light"] .trans-btn.active,
+:root[data-theme="light"] .dur-btn.active,
+:root[data-theme="light"] .res-btn.active,
+:root[data-theme="light"] .mode-btn.active{background:#eee5ff;color:#452088;border-color:#8651cb}
+:root[data-theme="light"] .trans-btn.active .ti{color:#452088}
+:root[data-theme="light"] .mode-btn.active i{color:#5931b2}
+:root[data-theme="light"] .time-card .tc-dur,
+:root[data-theme="light"] .repeat-val,
+:root[data-theme="light"] .file-item .num,
+:root[data-theme="light"] .card-title{color:#5630a5}
+:root[data-theme="light"] .pair-banner{color:#087042}
+:root[data-theme="light"] .status-box.info{color:#12558a}
+:root[data-theme="light"] .status-box.ok{color:#116938}
+:root[data-theme="light"] .status-box.error{color:#a82442}
+:root[data-theme="light"] .badge-slow{color:#8d5604}
+:root[data-theme="light"] footer a{color:#6032a7}
+:root[data-theme="light"] button:focus-visible,
+:root[data-theme="dark"] button:focus-visible{outline:2px solid #38bdf8;outline-offset:2px}
+:root[data-theme="dark"] .ygj-panel{background:#233450;color:#eff6ff}
+
+</style>
+</head>
+<body>
+
+    <div class="ygj-floating-brand" id="ygj-menu"><button type="button" class="ygj-trigger" id="ygj-trigger" aria-controls="ygj-panel" aria-expanded="false"><img src="teacher_mascot.png" alt="Q版楊貴傑老師"><span>AI 工具選單 ▴</span></button><nav class="ygj-panel" id="ygj-panel" aria-label="網站工具導覽" hidden><div class="ygj-panel-title"><img src="teacher_mascot.png" alt=""><span><b>楊貴傑老師</b><small>AI 多媒體工具中心</small></span></div><a target="_blank" rel="noopener noreferrer" href="index.html"><span class="em">📊</span>簡報設計王</a><a target="_blank" rel="noopener noreferrer" href="xx.html"><span class="em">🎙️</span>對話式語音產生器</a><a target="_blank" rel="noopener noreferrer" href="yy.html" class="current"><span class="em">🎬</span>圖音合併工具</a><div class="ygj-panel-note">選擇工具，即可切換網頁</div></nav></div>
+
+<canvas id="export-canvas"></canvas>
+
+<!-- 匯出中全螢幕遮罩 -->
+<div id="export-overlay" class="export-overlay">
+  <div class="spinner"><i class="fa-solid fa-compact-disc"></i></div>
+  <h2>影片生成中...</h2>
+  <p>⚠️ 請務必保持此視窗開啟，不要切換分頁或縮小視窗，以免錄製畫面中斷！</p>
+  <div class="prog-box">
+    <div class="progress-track">
+      <div class="progress-fill" id="overlay-progress-fill"></div>
+    </div>
+    <div class="progress-label" id="overlay-progress-label">0%</div>
+  </div>
+</div>
+
+<!-- 錄製與播放預覽 結合工作遮罩圖層 -->
+<div id="unified-modal" class="rec-modal">
+  <div class="rec-modal-content">
+    
+    <!-- 遮罩頭部、分頁切換導覽 -->
+    <div class="rec-modal-header">
+      <div class="rec-modal-title">
+        <i class="fa-solid fa-microphone-lines" style="color: var(--accent2)"></i>
+        <span>錄製與預覽聲音</span>
+      </div>
+      
+      <!-- 圖層內部上一頁、下一頁翻頁 -->
+      <div style="display: flex; gap: 0.5rem; align-items: center;">
+        <button class="btn-sm" onclick="prevUnifiedPage()" id="btn-modal-prev">
+          <i class="fa-solid fa-chevron-left"></i> 上一頁
+        </button>
+        <span id="modal-page-indicator" style="font-size: 0.88rem; color: var(--text2); font-weight: 700; min-width: 85px; text-align: center;">1 / 1</span>
+        <button class="btn-sm" onclick="nextUnifiedPage()" id="btn-modal-next">
+          下一頁 <i class="fa-solid fa-chevron-right"></i>
+        </button>
+      </div>
+
+      <button class="btn-sm" onclick="closeUnifiedModal()" style="border-color: var(--danger); color: var(--danger);">
+        <i class="fa-solid fa-xmark"></i> 關閉圖層
+      </button>
+    </div>
+
+    <!-- 圖片主體 (修正：補上 class="rec-modal-img" 確保 CSS 縮放效果確實套用) -->
+    <div class="rec-modal-img-wrap">
+      <img id="rec-modal-img" class="rec-modal-img" src="" alt="當前頁面大圖">
+      <div id="modal-img-name-badge" style="position: absolute; bottom: 12px; left: 12px; background: rgba(13, 17, 23, 0.85); padding: 4px 12px; border-radius: 6px; font-size: 0.78rem; color: var(--text2); border: 1px solid var(--border)">
+        -
+      </div>
+    </div>
+
+    <!-- 動態音訊控制面板 (由 JS 動態生成不同狀態) -->
+    <div id="modal-controls-area"></div>
+
+  </div>
+</div>
+
+<!-- ── Header ─────────────────────────────────────────────── -->
+<header>
+  <button id="theme-switch" class="theme-switch" type="button" onclick="toggleTheme()" aria-label="切換亮色與暗色系">☀️ 亮色系</button>
+  <h1><i class="fa-solid fa-film"></i> 圖音合併工具</h1>
+  <p class="tagline">
+    楊貴傑老師製作
+    &nbsp;·&nbsp; 將圖片與聲音合成為影片，免安裝、直接在瀏覽器使用
+  </p>
+</header>
+
+<main>
+
+  <!-- ── Mode Selector ────────────────────────────────── -->
+  <div class="card" style="margin-bottom:1.25rem">
+    <div class="card-title"><i class="fa-solid fa-layer-group"></i> 合併模式</div>
+    <div class="mode-btns">
+      <button class="mode-btn active" data-mode="pair" onclick="setMode('pair')">
+        <i class="fa-solid fa-link"></i>
+        <strong>圖聲配對模式</strong>
+        <span class="desc">每張圖配一個聲音檔，顯示時間 = 聲音時長；支援個別錄製/上傳及聲音延遲</span>
+      </button>
+      <button class="mode-btn" data-mode="bgm" onclick="setMode('bgm')">
+        <i class="fa-solid fa-record-vinyl"></i>
+        <strong>背景音樂模式</strong>
+        <span class="desc">聲音總時長平均分配給每張圖，每個聲音可設定重複次數，適合幻燈片配樂</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ── Images + Audio ──────────────────────────────────── -->
+  <div class="two-col">
+
+    <!-- Images -->
+    <div class="card">
+      <div class="card-title">
+        <i class="fa-regular fa-images"></i> 圖片清單
+        <span class="count" id="img-count"></span>
+      </div>
+      <div class="drop-zone" id="img-drop">
+        <input type="file" id="img-input" multiple accept="image/*,.heic,.heif,.pdf,.zip">
+        <i class="fa-solid fa-cloud-arrow-up big"></i>
+        <div>點擊選取，或將圖片／PDF 拖放至此</div>
+        <div class="hint">支援 JPG、PNG、GIF、WebP、BMP、HEIC（iOS）、PDF（自動拆頁）、ZIP 壓縮包</div>
+      </div>
+      <div class="file-list" id="img-list"></div>
+      <div class="list-actions">
+        <button class="btn-sm" onclick="sortImages()"><i class="fa-solid fa-arrow-down-a-z"></i> 依檔名排序</button>
+        <button class="btn-sm" onclick="clearImages()"><i class="fa-solid fa-trash-can"></i> 清除全部</button>
+      </div>
+    </div>
+
+    <!-- Audio -->
+    <div class="card">
+      <div class="card-title">
+        <i class="fa-solid fa-music"></i> 聲音清單 (背景音樂/庫庫檔)
+        <span class="count" id="audio-count"></span>
+      </div>
+      <div class="drop-zone" id="audio-drop">
+        <input type="file" id="audio-input" multiple accept="audio/*,.zip">
+        <i class="fa-solid fa-headphones big"></i>
+        <div>點擊選取，或將聲音檔拖放至此</div>
+        <div class="hint">支援 MP3、WAV、AAC、OGG、M4A、FLAC、ZIP 壓縮包</div>
+      </div>
+      <div class="file-list" id="audio-list"></div>
+      <div class="list-actions">
+        <button class="btn-sm" onclick="sortAudio()"><i class="fa-solid fa-arrow-down-a-z"></i> 依檔名排序</button>
+        <button class="btn-sm" onclick="clearAudio()"><i class="fa-solid fa-trash-can"></i> 清除全部</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Pair Info ──────────────────────────────────────── -->
+  <div class="pair-info" id="pair-info" style="display:none">
+    <div class="pair-banner" id="pair-banner"></div>
+  </div>
+
+  <!-- ── Pair Preview ─────────────────────────────────── -->
+  <div id="pair-preview" class="card">
+    <div class="pair-preview-hd">
+      <span id="pair-preview-icon"><i class="fa-solid fa-link"></i></span>
+      <span id="pair-preview-title"> 配對總覽</span>
+      <span class="psub" id="pair-preview-sub"></span>
+      <span class="phint" id="pair-preview-hint"><i class="fa-solid fa-arrows-up-down"></i> 拖曳列即可同時調整圖片與聲音順序</span>
+    </div>
+    <div class="pair-list" id="pair-list"></div>
+    <div class="unpaired-section" id="unpaired-section" style="display:none"></div>
+  </div>
+
+  <!-- ── Settings ──────────────────────────────────────── -->
+  <div class="card" style="margin-bottom:1.25rem">
+    <div class="card-title"><i class="fa-solid fa-sliders"></i> 設定</div>
+    <div class="settings-grid">
+
+      <!-- Transition effect -->
+      <div class="setting-row">
+        <div class="setting-label">轉場效果</div>
+        <div class="trans-grid" id="trans-grid"></div>
+      </div>
+
+      <!-- Transition duration -->
+      <div class="setting-row">
+        <div class="setting-label">轉場時間</div>
+        <div class="dur-btns" id="dur-btns">
+          <button class="dur-btn" data-v="0.5">0.5 秒</button>
+          <button class="dur-btn active" data-v="1">1 秒</button>
+          <button class="dur-btn" data-v="1.5">1.5 秒</button>
+          <button class="dur-btn" data-v="2">2 秒</button>
+        </div>
+      </div>
+
+      <!-- Audio delay -->
+      <div class="setting-row" id="delay-row">
+        <div class="setting-label">聲音延遲開始</div>
+        <div class="dur-btns" id="delay-btns">
+          <button class="dur-btn active" data-d="0">無延遲</button>
+          <button class="dur-btn" data-d="0.5">0.5 秒</button>
+          <button class="dur-btn" data-d="1">1 秒</button>
+          <button class="dur-btn" data-d="1.5">1.5 秒</button>
+        </div>
+        <div style="font-size:.76rem;color:var(--text2);margin-top:.1rem">
+          <i class="fa-solid fa-circle-info"></i> 每頁圖片出現後，延遲指定秒數再開始播放聲音
+        </div>
+      </div>
+
+      <!-- Resolution -->
+      <div class="setting-row">
+        <div class="setting-label">輸出解析度</div>
+        <div class="res-btns">
+          <button class="res-btn active" data-r="1080p">
+            <div class="rl">1080P</div>
+            <div class="rs">1920 × 1080</div>
+          </button>
+          <button class="res-btn" data-r="2k">
+            <div class="rl">2K</div>
+            <div class="rs">2560 × 1440 <span class="badge-slow">較慢</span></div>
+          </button>
+          <button class="res-btn" data-r="4k">
+            <div class="rl">4K</div>
+            <div class="rs">3840 × 2160 <span class="badge-slow">很慢</span></div>
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ── Export ─────────────────────────────────────────── -->
+  <div class="card export-wrap">
+    <div class="card-title" style="justify-content:center">
+      <i class="fa-solid fa-rocket"></i> 匯出影片
+    </div>
+    <div class="status-box" id="status-box"></div>
+    <div class="progress-wrap" id="progress-wrap">
+      <div class="progress-track">
+        <div class="progress-fill" id="progress-fill"></div>
+      </div>
+      <div class="progress-label" id="progress-label"></div>
+    </div>
+    <button class="btn-export" id="btn-export" onclick="startExport()">
+      <i class="fa-solid fa-video"></i> 匯出影片
+    </button>
+    <button class="btn-book" id="btn-book" onclick="exportHtmlBook()" style="margin-top:.75rem">
+      <i class="fa-solid fa-book-open"></i> 匯出 HTML 有聲書
+    </button>
+    <div class="export-note">
+      輸出格式：<strong>WebM 影片</strong>（可在 Chrome、Firefox、Edge、VLC 媒體播放器中播放）<br>
+      ※ 影片長度 = 各聲音檔時長加總；無音訊頁面預設停留 3 秒。
+    </div>
+  </div>
+
+</main>
+
+<!-- ── Footer ─────────────────────────────────────────────── -->
+<footer>
+  <div>
+    楊貴傑老師製作
+    <div class="ygj-revision-credit" style="margin-top:6px;font-size:12px;opacity:.8;">修改於阿剛老師</div>
+    &nbsp;·&nbsp; 圖音合併工具 v1.2 (看圖錄音與音訊播放整合版)
+  </div>
+  <div>
+    <div class="cc-block">
+      <div class="cc-title">
+        <span class="cc-icons">
+          <i class="fa-brands fa-creative-commons"></i>
+          <i class="fa-brands fa-creative-commons-by"></i>
+        </span>
+        創用 CC 授權聲明
+      </div>
+      本工具採用 <strong>Creative Commons 姓名標示 4.0 國際授權條款（CC BY 4.0）</strong>。<br>
+      您可以自由：<strong>分享</strong>（複製、散布本工具）及<strong>改作</strong>（重混、轉換或以本工具為基礎進行創作）。<br>
+      本彩色雙主題改版：<strong>楊貴傑老師製作</strong>；原始程式作者：<strong>阿剛老師</strong>。本改作保留原始作者姓名及 CC BY 4.0 授權標示。
+    </div>
+  </div>
+</footer>
+
+<script>
+(function(){
+  let theme='dark';
+  try { theme=localStorage.getItem('ygj-ai-tools-theme') || 'light'; } catch(e) {}
+  if(theme!=='dark')theme='light';
+  document.documentElement.setAttribute('data-theme',theme);
+  function refreshTheme(){
+    const btn=document.getElementById('theme-switch');
+    if(btn)btn.textContent=document.documentElement.getAttribute('data-theme')==='light'?'🌙 切換暗色系':'☀️ 切換亮色系';
+  }
+  window.toggleTheme=function(){
+    const next=document.documentElement.getAttribute('data-theme')==='light'?'dark':'light';
+    document.documentElement.setAttribute('data-theme',next);
+    try {localStorage.setItem('ygj-ai-tools-theme',next)} catch(e) {}
+    refreshTheme();
+  };
+  window.addEventListener('storage',e=>{if(e.key==='ygj-ai-tools-theme'){document.documentElement.setAttribute('data-theme',e.newValue==='dark'?'dark':'light');refreshTheme();}});
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',refreshTheme); else refreshTheme();
+})();
+</script>
+<script>
+/* 懸浮選單：拖曳、收合、跨頁保存位置、邊界保護 */
+(()=>{
+ const wrap=document.getElementById('ygj-menu');
+ const btn=document.getElementById('ygj-trigger');
+ const panel=document.getElementById('ygj-panel');
+ if(!wrap||!btn||!panel)return;
+ const KEY='ygj-mascot-menu-position-v1';
+ let pointer=null, dragged=false, blockClick=false;
+ const storageGet=()=>{try{return JSON.parse(localStorage.getItem(KEY)||'null')}catch{return null}};
+ const storageSet=obj=>{try{localStorage.setItem(KEY,JSON.stringify(obj))}catch{}};
+ const bounds=()=>({w:wrap.offsetWidth,h:wrap.offsetHeight});
+ function place(x,y){
+   const {w,h}=bounds();
+   x=Math.max(8,Math.min(innerWidth-w-8,x));
+   y=Math.max(8,Math.min(innerHeight-h-8,y));
+   wrap.style.setProperty('left',x+'px','important');
+   wrap.style.setProperty('top',y+'px','important');
+   wrap.style.setProperty('right','auto','important');
+   wrap.style.setProperty('bottom','auto','important');
+   positionPanel();
+ }
+ function positionPanel(){
+   const r=wrap.getBoundingClientRect();
+   panel.classList.toggle('ygj-panel-left',r.left+r.width/2<innerWidth/2);
+   panel.classList.toggle('ygj-panel-below',r.top<Math.min(350,innerHeight*.55));
+ }
+ function save(){const r=wrap.getBoundingClientRect();storageSet({x:r.left/Math.max(1,innerWidth-r.width),y:r.top/Math.max(1,innerHeight-r.height)});}
+ function restore(){const pos=storageGet();const {w,h}=bounds();if(pos&&Number.isFinite(pos.x)&&Number.isFinite(pos.y))place(pos.x*(innerWidth-w),pos.y*(innerHeight-h));else place(innerWidth-w-18,innerHeight-h-18)}
+ const close=()=>{panel.hidden=true;btn.setAttribute('aria-expanded','false');btn.setAttribute('aria-label','展開 AI 工具選單')};
+ btn.setAttribute('aria-label','展開 AI 工具選單；按住可移動位置');
+ btn.addEventListener('pointerdown',e=>{
+   if(e.button!==0||pointer!==null)return;
+   const r=wrap.getBoundingClientRect();
+   pointer={id:e.pointerId,startX:e.clientX,startY:e.clientY,left:r.left,top:r.top};dragged=false;
+   try{btn.setPointerCapture(e.pointerId)}catch{}
+ });
+ btn.addEventListener('pointermove',e=>{
+   if(!pointer||e.pointerId!==pointer.id)return;
+   const dx=e.clientX-pointer.startX,dy=e.clientY-pointer.startY;
+   if(!dragged&&Math.hypot(dx,dy)<7)return;
+   if(!dragged){dragged=true;close();wrap.classList.add('ygj-dragging')}
+   place(pointer.left+dx,pointer.top+dy);
+   e.preventDefault();
+ });
+ const end=e=>{
+   if(!pointer||e.pointerId!==pointer.id)return;
+   if(dragged){save();blockClick=true;setTimeout(()=>blockClick=false,180)}
+   wrap.classList.remove('ygj-dragging');pointer=null;dragged=false;
+   try{btn.releasePointerCapture(e.pointerId)}catch{}
+ };
+ btn.addEventListener('pointerup',end);btn.addEventListener('pointercancel',end);
+ btn.addEventListener('click',e=>{
+   if(blockClick){e.preventDefault();e.stopPropagation();return}
+   panel.hidden=!panel.hidden;btn.setAttribute('aria-expanded',String(!panel.hidden));
+   if(!panel.hidden)positionPanel();
+ });
+ document.addEventListener('pointerdown',e=>{if(!wrap.contains(e.target))close()});
+ document.addEventListener('keydown',e=>{if(e.key==='Escape')close()});
+ addEventListener('resize',()=>{const r=wrap.getBoundingClientRect();place(r.left,r.top);save()});
+ restore();close();
+})();
+</script>
+<script>
+/* ═══════════════════════════════════════════════════════════════
+   State
+═══════════════════════════════════════════════════════════════ */
+let imageItems  = [];   // {id, url, img, name}
+let audioItems  = [];   // {id, buffer, name, duration, file, repeat, isRecorded} (Aligned with imageItems in pair mode)
+let mergeMode   = 'pair'; // 'pair' | 'bgm'
+let selTrans    = 'fade';
+let selTransDur = 1.0;
+let selRes      = '1080p';
+let audioDelay  = 0;    // seconds to delay audio start per page (pair mode only)
+let exporting   = false;
+
+// Unified voice recording & preview states
+let recStream   = null;
+let recRecorder = null;
+let recChunks   = [];
+let recInterval = null;
+let recDuration = 0;
+let recActiveIdx = null;
+let recCancelled = false;
+
+// Modal Live Audio Object & Tracker
+let modalAudioObj = null;
+let modalAudioProgInterval = null;
+let modalActiveIdx = null;
+
+const TRANSITIONS = [
+  { id: 'none',       label: '直接切換', icon: '✂️' },
+  { id: 'fade',       label: '淡入淡出', icon: '🌅' },
+  { id: 'slide-left', label: '向左滑動', icon: '⬅️' },
+  { id: 'slide-right',label: '向右滑動', icon: '➡️' },
+  { id: 'zoom',       label: '縮放淡入', icon: '🔍' },
+  { id: 'wipe',       label: '百葉擦除', icon: '⬇️' },
+];
+
+const RESOLUTIONS = {
+  '1080p': { w: 1920, h: 1080 },
+  '2k':    { w: 2560, h: 1440 },
+  '4k':    { w: 3840, h: 2160 },
+};
+
+const BITRATES = { '1080p': 8e6, '2k': 18e6, '4k': 45e6 };
+
+let uid = 0;
+const genId = () => `id_${++uid}`;
+
+/* ═══════════════════════════════════════════════════════════════
+   Init
+═══════════════════════════════════════════════════════════════ */
+document.addEventListener('DOMContentLoaded', () => {
+  if (window.pdfjsLib) {
+    pdfjsLib.GlobalWorkerOptions.workerSrc =
+      'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+  }
+  buildTransGrid();
+  initDropZones();
+  initResBtns();
+  initDurBtns();
+  initDelayBtns();
+});
+
+function buildTransGrid() {
+  document.getElementById('trans-grid').innerHTML = TRANSITIONS.map(t => `
+    <button class="trans-btn ${t.id === selTrans ? 'active' : ''}"
+            data-id="${t.id}" onclick="pickTrans('${t.id}')">
+      <span class="ti">${t.icon}</span>${t.label}
+    </button>`).join('');
+}
+
+function pickTrans(id) {
+  selTrans = id;
+  document.querySelectorAll('.trans-btn').forEach(b =>
+    b.classList.toggle('active', b.dataset.id === id));
+}
+
+function initResBtns() {
+  document.querySelectorAll('.res-btn').forEach(b =>
+    b.addEventListener('click', () => {
+      selRes = b.dataset.r;
+      document.querySelectorAll('.res-btn').forEach(x => x.classList.remove('active'));
+      b.classList.add('active');
+    }));
+}
+
+function initDurBtns() {
+  document.querySelectorAll('#dur-btns .dur-btn').forEach(b =>
+    b.addEventListener('click', () => {
+      selTransDur = parseFloat(b.dataset.v);
+      document.querySelectorAll('#dur-btns .dur-btn').forEach(x => x.classList.remove('active'));
+      b.classList.add('active');
+    }));
+}
+
+function initDelayBtns() {
+  document.querySelectorAll('#delay-btns .dur-btn').forEach(b =>
+    b.addEventListener('click', () => {
+      audioDelay = parseFloat(b.dataset.d);
+      document.querySelectorAll('#delay-btns .dur-btn').forEach(x => x.classList.remove('active'));
+      b.classList.add('active');
+      refreshPairInfo();
+    }));
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   Mode switching
+═══════════════════════════════════════════════════════════════ */
+function setMode(mode) {
+  mergeMode = mode;
+  document.querySelectorAll('.mode-btn').forEach(b =>
+    b.classList.toggle('active', b.dataset.mode === mode));
+  // Delay row only available in pair mode
+  document.getElementById('delay-row')
+    .classList.toggle('row-disabled', mode === 'bgm');
+  
+  alignAudioInPairMode();
+  renderAudioList();
+  refreshPairInfo();
+}
+
+function setRepeat(id, delta) {
+  const item = audioItems.find(x => x && x.id === id);
+  if (!item) return;
+  item.repeat = Math.max(1, (item.repeat || 1) + delta);
+  // Update just the display value without full re-render
+  const el = document.querySelector(`[data-id="${id}"] .repeat-val`);
+  if (el) el.textContent = `${item.repeat}×`;
+  refreshPairInfo();
+}
+
+function calcBgmInfo() {
+  const valid = audioItems.filter(Boolean);
+  const totalSec = valid.reduce((s, a) => s + a.duration * (a.repeat || 1), 0);
+  const perImg   = imageItems.length > 0 ? totalSec / imageItems.length : 0;
+  return { totalSec, perImg };
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   Alignment & Audio Padding (Guarantees Pair Mode Synced State)
+═══════════════════════════════════════════════════════════════ */
+function alignAudioInPairMode() {
+  if (mergeMode !== 'pair') return;
+  // Preserve valid sound items that were loaded/recorded
+  const valid = audioItems.filter(Boolean);
+  audioItems = [];
+  for (let i = 0; i < imageItems.length; i++) {
+    audioItems.push(valid[i] || null);
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   Drop Zones
+═══════════════════════════════════════════════════════════════ */
+function initDropZones() {
+  setupZone('img-drop',   'img-input',   handleImgFiles);
+  setupZone('audio-drop', 'audio-input', handleAudioFiles);
+}
+
+function setupZone(zoneId, inputId, handler) {
+  const zone  = document.getElementById(zoneId);
+  const input = document.getElementById(inputId);
+  zone.addEventListener('click', () => input.click());
+  input.addEventListener('change', e => { handler(e.target.files); input.value = ''; });
+  zone.addEventListener('dragenter', e => e.preventDefault());
+  zone.addEventListener('dragover',  e => { e.preventDefault(); zone.classList.add('dragover'); });
+  zone.addEventListener('dragleave', e => { if (!zone.contains(e.relatedTarget)) zone.classList.remove('dragover'); });
+  zone.addEventListener('drop', e => {
+    e.preventDefault();
+    zone.classList.remove('dragover');
+    if (e.dataTransfer.files.length) handler(e.dataTransfer.files);
+  });
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   ZIP + HEIC helpers
+═══════════════════════════════════════════════════════════════ */
+function guessMime(name) {
+  const ext = name.split('.').pop().toLowerCase();
+  return ({
+    jpg:'image/jpeg', jpeg:'image/jpeg', png:'image/png',
+    gif:'image/gif',  webp:'image/webp', bmp:'image/bmp',
+    heic:'image/heic', heif:'image/heif', pdf:'application/pdf',
+    mp3:'audio/mpeg', wav:'audio/wav',   ogg:'audio/ogg',
+    aac:'audio/aac',  m4a:'audio/mp4',  flac:'audio/flac',
+  })[ext] || 'application/octet-stream';
+}
+
+async function extractFromZip(zipFile, kind) {
+  const imgPat   = /\.(jpe?g|png|gif|webp|bmp|heic|heif|pdf)$/i;
+  const audioPat = /\.(mp3|wav|ogg|aac|m4a|flac)$/i;
+  const pat = kind === 'image' ? imgPat : audioPat;
+  const zip = await JSZip.loadAsync(zipFile);
+  const out = [];
+  for (const [path, entry] of Object.entries(zip.files)) {
+    if (entry.dir) continue;
+    const fname = path.split('/').pop();
+    if (!fname || !pat.test(fname)) continue;
+    const blob = await entry.async('blob');
+    out.push(new File([blob], fname, { type: guessMime(fname) }));
+  }
+  return out;
+}
+
+async function processImageFile(f) {
+  const isHeic = /\.(heic|heif)$/i.test(f.name) || f.type === 'image/heic' || f.type === 'image/heif';
+  let blob = f;
+  if (isHeic) {
+    try {
+      const converted = await heic2any({ blob: f, toType: 'image/jpeg', quality: 0.95 });
+      blob = Array.isArray(converted) ? converted[0] : converted;
+    } catch (e) {
+      console.warn('HEIC 轉換失敗:', f.name, e);
+      return null;
+    }
+  }
+  const url = URL.createObjectURL(blob);
+  try {
+    const img = await loadImg(url);
+    return { id: genId(), url, img, name: f.name };
+  } catch {
+    URL.revokeObjectURL(url);
+    return null;
+  }
+}
+
+async function processPdfFile(file) {
+  if (!window.pdfjsLib) {
+    showStatus('PDF.js 尚未載入，請重新整理頁面後再試', 'error');
+    return [];
+  }
+  const arrayBuffer = await file.arrayBuffer();
+  const pdfDoc  = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+  const total   = pdfDoc.numPages;
+  const base    = file.name.replace(/\.pdf$/i, '');
+  const items   = [];
+
+  for (let p = 1; p <= total; p++) {
+    showStatus(`PDF 轉換中：${file.name}  第 ${p} / ${total} 頁…`, 'info');
+    const page     = await pdfDoc.getPage(p);
+    const viewport = page.getViewport({ scale: 2.0 });
+    const canvas   = document.createElement('canvas');
+    canvas.width   = Math.round(viewport.width);
+    canvas.height  = Math.round(viewport.height);
+    const ctx2d    = canvas.getContext('2d');
+    ctx2d.fillStyle = '#ffffff';
+    ctx2d.fillRect(0, 0, canvas.width, canvas.height);
+    await page.render({ canvasContext: ctx2d, viewport }).promise;
+
+    const blob = await new Promise(r => canvas.toBlob(r, 'image/jpeg', 0.92));
+    const url  = URL.createObjectURL(blob);
+    const img  = await loadImg(url);
+    const pad  = String(p).padStart(3, '0');
+    items.push({ id: genId(), url, img, name: `${base}_p${pad}.jpg` });
+  }
+  return items;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   Images
+═══════════════════════════════════════════════════════════════ */
+async function handleImgFiles(files) {
+  const all    = Array.from(files);
+  const zips   = all.filter(f => /\.zip$/i.test(f.name) || f.type === 'application/zip');
+  const nonZip = all.filter(f => !/\.zip$/i.test(f.name) && f.type !== 'application/zip');
+
+  // Expand ZIPs (may contain images, HEIC, or PDFs)
+  let expanded = [...nonZip];
+  if (zips.length) {
+    showStatus(`解壓縮 ZIP 中（共 ${zips.length} 個）…`, 'info');
+    for (const z of zips) {
+      expanded.push(...await extractFromZip(z, 'image'));
+    }
+  }
+
+  const pdfs   = expanded.filter(f => /\.pdf$/i.test(f.name) || f.type === 'application/pdf');
+  const images = expanded.filter(f =>
+    !(/\.pdf$/i.test(f.name) || f.type === 'application/pdf') &&
+    (f.type.startsWith('image/') || /\.(heic|heif)$/i.test(f.name)));
+
+  if (!pdfs.length && !images.length) { hideStatus(); return; }
+
+  // Convert PDF pages first (preserve page order within each PDF)
+  const pdfItems = [];
+  for (const pdf of pdfs) {
+    pdfItems.push(...await processPdfFile(pdf));
+  }
+
+  // Load regular images
+  if (images.length) showStatus(`載入圖片中（共 ${images.length} 張）…`, 'info');
+  const imgResults = await Promise.all(images.map(f => processImageFile(f)));
+  const imgItems   = imgResults.filter(Boolean);
+
+  // Merge: sort regular images by name, keep PDF pages in page order
+  imgItems.sort((a, b) => a.name.localeCompare(b.name, 'zh'));
+  const allLoaded = [...pdfItems, ...imgItems];
+  allLoaded.sort((a, b) => a.name.localeCompare(b.name, 'zh'));
+  imageItems.push(...allLoaded);
+  
+  alignAudioInPairMode();
+  renderImgList();
+  refreshPairInfo();
+  hideStatus();
+}
+
+function loadImg(url) {
+  return new Promise((res, rej) => {
+    const img = new Image();
+    img.onload  = () => res(img);
+    img.onerror = rej;
+    img.src = url;
+  });
+}
+
+function renderImgList() {
+  const list = document.getElementById('img-list');
+  document.getElementById('img-count').textContent =
+    imageItems.length ? `(${imageItems.length} 張)` : '';
+  list.innerHTML = imageItems.map((item, i) => `
+    <div class="file-item" data-id="${item.id}" data-kind="img" draggable="true">
+      <span class="grip"><i class="fa-solid fa-grip-vertical"></i></span>
+      <img class="thumb" src="${item.url}" alt="">
+      <div class="info">
+        <div class="name" title="${item.name}">${item.name}</div>
+        <div class="meta">${item.img.naturalWidth} × ${item.img.naturalHeight} px</div>
+      </div>
+      <span class="num">#${i+1}</span>
+      <button class="btn-del" title="移除" onclick="removeImg('${item.id}')">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>`).join('');
+  bindDrag(list, imageItems, renderImgList);
+}
+
+function removeImg(id) {
+  const idx = imageItems.findIndex(x => x.id === id);
+  if (idx !== -1) {
+    const it = imageItems[idx];
+    URL.revokeObjectURL(it.url);
+    imageItems.splice(idx, 1);
+    if (mergeMode === 'pair') {
+      audioItems.splice(idx, 1);
+    }
+  }
+  renderImgList();
+  refreshPairInfo();
+}
+
+function sortImages() {
+  imageItems.sort((a, b) => a.name.localeCompare(b.name, 'zh'));
+  if (mergeMode === 'pair') {
+    alignAudioInPairMode();
+  }
+  renderImgList();
+  refreshPairInfo();
+}
+
+function clearImages() {
+  imageItems.forEach(x => URL.revokeObjectURL(x.url));
+  imageItems = [];
+  if (mergeMode === 'pair') audioItems = [];
+  renderImgList();
+  refreshPairInfo();
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   Audio Import & Management
+═══════════════════════════════════════════════════════════════ */
+async function handleAudioFiles(files) {
+  const all  = Array.from(files);
+  const zips = all.filter(f => /\.zip$/i.test(f.name) || f.type === 'application/zip');
+  let toLoad = all.filter(f => !/\.zip$/i.test(f.name) && f.type !== 'application/zip')
+                  .filter(f => f.type.startsWith('audio/') || /\.(mp3|wav|ogg|aac|m4a|flac)$/i.test(f.name));
+
+  if (zips.length) {
+    showStatus(`解壓縮 ZIP 中（共 ${zips.length} 個）…`, 'info');
+    for (const z of zips) {
+      const extracted = await extractFromZip(z, 'audio');
+      toLoad.push(...extracted);
+    }
+  }
+
+  if (!toLoad.length) { hideStatus(); return; }
+  showStatus(`載入聲音檔中（共 ${toLoad.length} 個），請稍候…`, 'info');
+  try {
+    const ctx = new AudioContext();
+    const loaded = await Promise.all(toLoad.map(async f => {
+      const ab  = await f.arrayBuffer();
+      const buf = await ctx.decodeAudioData(ab);
+      return { id: genId(), buffer: buf, name: f.name, duration: buf.duration, repeat: 1, file: f, isRecorded: false };
+    }));
+    await ctx.close();
+    loaded.sort((a, b) => a.name.localeCompare(b.name, 'zh'));
+
+    if (mergeMode === 'pair') {
+      // Assign imported audios to consecutive empty spots first
+      let loadedIdx = 0;
+      for (let i = 0; i < audioItems.length; i++) {
+        if (!audioItems[i] && loadedIdx < loaded.length) {
+          audioItems[i] = loaded[loadedIdx++];
+        }
+      }
+      // Append any leftovers
+      while (loadedIdx < loaded.length) {
+        audioItems.push(loaded[loadedIdx++]);
+      }
+    } else {
+      audioItems.push(...loaded);
+    }
+
+    renderAudioList();
+    refreshPairInfo();
+    hideStatus();
+  } catch (err) {
+    showStatus('無法解碼聲音檔：' + err.message, 'error');
+  }
+}
+
+function fmtDur(sec) {
+  const m = Math.floor(sec / 60);
+  const s = Math.floor(sec % 60);
+  return `${m}:${s.toString().padStart(2, '0')}`;
+}
+
+function renderAudioList() {
+  const list = document.getElementById('audio-list');
+  list.className = `file-list${mergeMode === 'bgm' ? ' bgm' : ''}`;
+  
+  const validCount = audioItems.filter(Boolean).length;
+  document.getElementById('audio-count').textContent =
+    validCount ? `(${validCount} 個)` : '';
+
+  if (mergeMode === 'bgm') {
+    list.innerHTML = audioItems.map((item, i) => `
+      <div class="file-item" data-id="${item.id}" data-kind="audio" draggable="true">
+        <span class="grip"><i class="fa-solid fa-grip-vertical"></i></span>
+        <div class="audio-ico"><i class="fa-solid fa-music"></i></div>
+        <div class="info">
+          <div class="name" title="${item.name}">${item.name}</div>
+          <div class="meta"><i class="fa-regular fa-clock"></i> ${fmtDur(item.duration)}</div>
+        </div>
+        <span class="num">#${i+1}</span>
+        <div class="repeat-ctrl">
+          <span class="repeat-label">重複</span>
+          <button class="repeat-btn" onclick="setRepeat('${item.id}',-1)">−</button>
+          <span class="repeat-val">${item.repeat || 1}×</span>
+          <button class="repeat-btn" onclick="setRepeat('${item.id}',1)">+</button>
+        </div>
+        <button class="btn-del" title="移除" onclick="removeAudio('${item.id}')">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>`).join('');
+    bindDrag(list, audioItems, renderAudioList);
+  } else {
+    list.innerHTML = audioItems.map((item, i) => {
+      if (!item) {
+        return `
+          <div class="file-item empty-slot" data-idx="${i}" style="opacity: 0.5; border-style: dashed; background: var(--bg); cursor: default;">
+            <div class="audio-ico" style="background: rgba(255,255,255,0.02); color: var(--border);"><i class="fa-solid fa-microphone-slash"></i></div>
+            <div class="info">
+              <div class="name" style="color: var(--text2); font-style: italic;">第 ${i+1} 頁尚未配對聲音</div>
+              <div class="meta">可直接在下方「配對總覽」開啟工作區進行錄製</div>
+            </div>
+            <span class="num">#${i+1}</span>
+          </div>`;
+      }
+      return `
+        <div class="file-item" data-id="${item.id}" data-kind="audio" draggable="true">
+          <span class="grip"><i class="fa-solid fa-grip-vertical"></i></span>
+          <div class="audio-ico" style="${item.isRecorded ? 'background: rgba(248,81,73,0.15); color: var(--danger);' : ''}">
+            <i class="fa-solid ${item.isRecorded ? 'fa-microphone' : 'fa-music'}"></i>
+          </div>
+          <div class="info">
+            <div class="name" title="${item.name}">${item.name}</div>
+            <div class="meta">
+              <i class="fa-regular fa-clock"></i> ${fmtDur(item.duration)}
+              ${item.isRecorded ? '<span class="badge-rec">🎙️ 錄製</span>' : ''}
+            </div>
+          </div>
+          <span class="num">#${i+1}</span>
+          <button class="btn-del" title="移除" onclick="removeAudio('${item.id}')">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>`;
+    }).join('');
+    bindDrag(list, audioItems, renderAudioList);
+  }
+}
+
+function removeAudio(id) {
+  if (mergeMode === 'pair') {
+    const idx = audioItems.findIndex(x => x && x.id === id);
+    if (idx !== -1) audioItems[idx] = null;
+  } else {
+    audioItems = audioItems.filter(x => x && x.id !== id);
+  }
+  renderAudioList(); refreshPairInfo();
+}
+
+function sortAudio() {
+  if (mergeMode === 'pair') {
+    const valid = audioItems.filter(Boolean);
+    valid.sort((a, b) => a.name.localeCompare(b.name, 'zh'));
+    audioItems = [];
+    for (let i = 0; i < imageItems.length; i++) {
+      audioItems.push(valid[i] || null);
+    }
+  } else {
+    audioItems.sort((a, b) => a.name.localeCompare(b.name, 'zh'));
+  }
+  renderAudioList(); refreshPairInfo();
+}
+
+function clearAudio() {
+  if (mergeMode === 'pair') {
+    audioItems = audioItems.map(() => null);
+  } else {
+    audioItems = [];
+  }
+  renderAudioList(); refreshPairInfo();
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   Unified Modal Features (Overlay Screen containing Recording & Preview)
+═══════════════════════════════════════════════════════════════ */
+function openUnifiedModal(idx) {
+  if (idx < 0 || idx >= imageItems.length) return;
+  
+  // Clean up any previously playing live audio
+  stopAndClearModalAudio();
+  
+  modalActiveIdx = idx;
+  
+  // Show overlay
+  document.getElementById('unified-modal').classList.add('show');
+  
+  // Update view
+  renderUnifiedModalContent();
+}
+
+function closeUnifiedModal() {
+  // If actively recording, suggest stopping
+  if (recActiveIdx !== null) {
+    if (!confirm('正在錄音中，確定要中斷並關閉嗎？(未保存的錄音將會消失)')) {
+      return;
+    }
+    cancelRecording();
+  }
+  
+  stopAndClearModalAudio();
+  document.getElementById('unified-modal').classList.remove('show');
+  modalActiveIdx = null;
+  
+  // Rerender lists
+  renderPairList();
+  renderAudioList();
+  refreshPairInfo();
+}
+
+function nextUnifiedPage() {
+  if (modalActiveIdx === null) return;
+  if (modalActiveIdx < imageItems.length - 1) {
+    if (recActiveIdx !== null) {
+      alert('請先結束目前的錄音再切換頁面！');
+      return;
+    }
+    openUnifiedModal(modalActiveIdx + 1);
+  }
+}
+
+function prevUnifiedPage() {
+  if (modalActiveIdx === null) return;
+  if (modalActiveIdx > 0) {
+    if (recActiveIdx !== null) {
+      alert('請先結束目前的錄音再切換頁面！');
+      return;
+    }
+    openUnifiedModal(modalActiveIdx - 1);
+  }
+}
+
+function renderUnifiedModalContent() {
+  const idx = modalActiveIdx;
+  if (idx === null) return;
+
+  const img = imageItems[idx];
+  const aud = audioItems[idx];
+
+  // Update Indicator
+  document.getElementById('modal-page-indicator').textContent = `${idx + 1} / ${imageItems.length}`;
+  
+  // Update image (preserving original aspect ratio)
+  const imgEl = document.getElementById('rec-modal-img');
+  imgEl.src = img.url;
+  
+  document.getElementById('modal-img-name-badge').textContent = `${img.name} (${img.img.naturalWidth} × ${img.img.naturalHeight} px)`;
+
+  // Update Prev / Next Buttons state
+  document.getElementById('btn-modal-prev').disabled = (idx === 0);
+  document.getElementById('btn-modal-next').disabled = (idx === imageItems.length - 1);
+
+  // Render proper controls depending on current page recording/audio status
+  const ctrlArea = document.getElementById('modal-controls-area');
+
+  if (recActiveIdx === idx) {
+    // STATE A: Currently recording
+    ctrlArea.innerHTML = `
+      <div class="modal-ctrl-card" style="display: flex; align-items: center; justify-content: space-between; border-left: 4px solid var(--danger);">
+        <div style="display: flex; align-items: center; gap: 1rem;">
+          <div class="rec-modal-pulse fa-beat-fade"></div>
+          <div>
+            <div style="font-weight: 700; color: var(--danger); font-size: 1.05rem;">正在錄製聲音中...</div>
+            <div style="font-size: 0.8rem; color: var(--text2); margin-top: 0.15rem;">請面對麥克風發聲，看著大圖說話即可。</div>
+          </div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 1.5rem;">
+          <div id="rec-modal-timer" style="font-family: monospace; font-size: 1.6rem; font-weight: 700; color: #fff; background: rgba(0,0,0,0.35); padding: 0.2rem 0.8rem; border-radius: 6px;">0:00</div>
+          <div style="display: flex; gap: 0.5rem;">
+            <button class="btn-rec-cancel" onclick="cancelRecording()"><i class="fa-solid fa-ban"></i> 取消錄製</button>
+            <button class="btn-rec-stop" onclick="stopRecording()"><i class="fa-solid fa-circle-stop"></i> 結束並保存</button>
+          </div>
+        </div>
+      </div>
+    `;
+  } else if (!aud) {
+    // STATE B: No paired/recorded audio for this page yet
+    ctrlArea.innerHTML = `
+      <div class="modal-ctrl-card" style="display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 1rem; padding: 2rem 1.2rem;">
+        <div style="font-size: 1.15rem; color: var(--text2); font-weight: 600;"><i class="fa-solid fa-microphone-slash" style="margin-right: 0.5rem;"></i>此頁面目前尚未配對或錄製聲音</div>
+        <div style="display: flex; gap: 1rem;">
+          <button class="btn-export" style="padding: 0.65rem 2rem; font-size: 0.95rem; background: var(--grad); margin-bottom: 0;" onclick="startRecordingInModal(${idx})">
+            <i class="fa-solid fa-microphone" style="margin-right: 0.4rem;"></i> 開始錄製聲音
+          </button>
+          <button class="btn-book" style="padding: 0.65rem 1.8rem; font-size: 0.95rem; margin-top:0;" onclick="triggerModalAudioUpload(${idx})">
+            <i class="fa-solid fa-file-arrow-up" style="margin-right: 0.4rem;"></i> 上傳聲音檔
+          </button>
+          <input type="file" id="modal-audio-file-loader-${idx}" accept="audio/*" style="display:none" onchange="handleModalAudioUpload(${idx}, this.files)">
+        </div>
+        <p style="font-size: 0.76rem; color: var(--text2); max-width: 500px; line-height: 1.5;">
+          💡 您可以一邊看著上方的大圖，一邊按下「開始錄製聲音」進行同步配音。<br>本頁若無配音，導出影片時將會預設停留 3 秒靜音。
+        </p>
+      </div>
+    `;
+  } else {
+    // STATE C: Audio exists (Show integrated player widget)
+    ctrlArea.innerHTML = `
+      <div class="modal-ctrl-card" style="display: flex; flex-direction: column; gap: 1rem; border-left: 4px solid var(--accent);">
+        <!-- Player Row -->
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 1rem;">
+          <div style="display: flex; align-items: center; gap: 0.75rem; flex: 1; min-width: 0;">
+            <button id="modal-play-btn" class="btn-sm" style="width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: var(--accent); border: none; color: #fff; cursor: pointer; flex-shrink: 0;" onclick="toggleModalAudioPlayback(${idx})">
+              <i class="fa-solid fa-play" style="font-size: 1.1rem; margin-left: 2px;" id="modal-play-icon"></i>
+            </button>
+            <div style="flex: 1; min-width: 0;">
+              <div style="font-size: 0.92rem; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--accent3);" title="${aud.name}">${aud.name}</div>
+              <div style="font-size: 0.76rem; color: var(--text2); display: flex; align-items: center; gap: 0.6rem; margin-top: 0.15rem;">
+                <span>類型: ${aud.isRecorded ? '🎙️ 即時錄音' : '🎵 上傳音訊'}</span>
+                <span>時長: ${fmtDur(aud.duration)}</span>
+              </div>
+            </div>
+          </div>
+          <!-- Progress Timer -->
+          <div style="display: flex; align-items: center; gap: 0.75rem; font-family: monospace; font-size: 0.85rem; color: var(--text2);">
+            <span id="modal-audio-time-current">0:00</span>
+            <span>/</span>
+            <span>${fmtDur(aud.duration)}</span>
+          </div>
+        </div>
+
+        <!-- Progress Seek bar -->
+        <div class="progress-track" style="height: 6px; background: rgba(255,255,255,0.06); cursor: pointer; border-radius: 3px;" onclick="seekModalAudio(event)">
+          <div id="modal-audio-progress-fill" style="height: 100%; background: var(--grad); width: 0%; border-radius: 3px;"></div>
+        </div>
+
+        <!-- Actions Tray -->
+        <div style="display: flex; align-items: center; justify-content: space-between; border-top: 1px solid rgba(255,255,255,0.06); padding-top: 0.75rem; margin-top: 0.25rem;">
+          <div style="display: flex; align-items: center; gap: 0.8rem;">
+            <span style="font-size: 0.76rem; color: var(--text2); display: flex; align-items: center; gap: 0.3rem;">
+              <i class="fa-solid fa-volume-high"></i> 音量
+            </span>
+            <input type="range" id="modal-audio-vol-slider" min="0" max="1" step="0.05" value="1" style="width: 80px;" oninput="setModalAudioVol(this.value)">
+          </div>
+          <div style="display: flex; gap: 0.5rem;">
+            <button class="btn-sm" style="background: rgba(124,58,237,0.15); border-color: var(--accent);" onclick="startRecordingInModal(${idx})">
+              <i class="fa-solid fa-microphone"></i> 重新錄製
+            </button>
+            <button class="btn-sm" onclick="triggerModalAudioUpload(${idx})">
+              <i class="fa-solid fa-file-arrow-up"></i> 替換聲音檔
+            </button>
+            <button class="btn-sm" style="color: var(--danger); border-color: rgba(248,81,73,0.3);" onclick="removeAudioInModal(${idx})">
+              <i class="fa-solid fa-trash-can"></i> 清除聲音
+            </button>
+            <input type="file" id="modal-audio-file-loader-${idx}" accept="audio/*" style="display:none" onchange="handleModalAudioUpload(${idx}, this.files)">
+          </div>
+        </div>
+      </div>
+    `;
+  }
+}
+
+/* ── Live Playback controller ── */
+function toggleModalAudioPlayback(idx) {
+  const aud = audioItems[idx];
+  if (!aud) return;
+
+  const playIcon = document.getElementById('modal-play-icon');
+
+  if (modalAudioObj && !modalAudioObj.paused) {
+    modalAudioObj.pause();
+    playIcon.className = 'fa-solid fa-play';
+    clearInterval(modalAudioProgInterval);
+    return;
+  }
+
+  if (!modalAudioObj) {
+    let url = '';
+    if (aud.file) {
+      url = URL.createObjectURL(aud.file);
+    }
+    if (!url) return;
+
+    modalAudioObj = new Audio(url);
+    
+    // Set slider vol if exists
+    const slider = document.getElementById('modal-audio-vol-slider');
+    modalAudioObj.volume = slider ? parseFloat(slider.value) : 1.0;
+
+    modalAudioObj.onended = () => {
+      playIcon.className = 'fa-solid fa-play';
+      document.getElementById('modal-audio-progress-fill').style.width = '0%';
+      document.getElementById('modal-audio-time-current').textContent = '0:00';
+      clearInterval(modalAudioProgInterval);
+      modalAudioObj = null;
+      URL.revokeObjectURL(url);
+    };
+  }
+
+  modalAudioObj.play().catch(e => console.warn(e));
+  playIcon.className = 'fa-solid fa-pause';
+
+  modalAudioProgInterval = setInterval(() => {
+    if (!modalAudioObj) return;
+    const curT = modalAudioObj.currentTime;
+    const dur = modalAudioObj.duration || aud.duration;
+    const ratio = Math.min((curT / dur) * 100, 100);
+    
+    const progressFill = document.getElementById('modal-audio-progress-fill');
+    const timerCurrent = document.getElementById('modal-audio-time-current');
+    
+    if (progressFill) progressFill.style.width = `${ratio}%`;
+    if (timerCurrent) timerCurrent.textContent = fmtDur(curT);
+  }, 100);
+}
+
+function seekModalAudio(event) {
+  if (!modalAudioObj) return;
+  const rect = event.currentTarget.getBoundingClientRect();
+  const clickX = event.clientX - rect.left;
+  const width = rect.width;
+  const ratio = Math.max(0, Math.min(clickX / width, 1));
+  
+  modalAudioObj.currentTime = ratio * modalAudioObj.duration;
+  
+  const progressFill = document.getElementById('modal-audio-progress-fill');
+  const timerCurrent = document.getElementById('modal-audio-time-current');
+  
+  if (progressFill) progressFill.style.width = `${ratio * 100}%`;
+  if (timerCurrent) timerCurrent.textContent = fmtDur(modalAudioObj.currentTime);
+}
+
+function setModalAudioVol(v) {
+  if (modalAudioObj) {
+    modalAudioObj.volume = parseFloat(v);
+  }
+}
+
+function stopAndClearModalAudio() {
+  if (modalAudioObj) {
+    modalAudioObj.pause();
+    modalAudioObj = null;
+  }
+  if (modalAudioProgInterval) {
+    clearInterval(modalAudioProgInterval);
+    modalAudioProgInterval = null;
+  }
+}
+
+/* ── Live Recording triggers inside Modal ── */
+async function startRecordingInModal(idx) {
+  if (recActiveIdx !== null) return;
+  stopAndClearModalAudio();
+
+  try {
+    recChunks = [];
+    recDuration = 0;
+    recCancelled = false;
+    recStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    recRecorder = new MediaRecorder(recStream);
+    recRecorder.ondataavailable = e => {
+      if (e.data.size > 0) recChunks.push(e.data);
+    };
+
+    recRecorder.onstop = async () => {
+      clearInterval(recInterval);
+
+      if (recCancelled) {
+        recActiveIdx = null;
+        cleanupStream();
+        renderUnifiedModalContent();
+        return;
+      }
+
+      const blob = new Blob(recChunks, { type: 'audio/webm' });
+      showStatus('正在解碼聲音資料中…', 'info');
+      try {
+        const arrayBuffer = await blob.arrayBuffer();
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const decodedBuf = await audioCtx.decodeAudioData(arrayBuffer);
+        await audioCtx.close();
+
+        audioItems[idx] = {
+          id: genId(),
+          buffer: decodedBuf,
+          name: `錄音_${imageItems[idx].name.replace(/\.[^/.]+$/, "")}.wav`,
+          duration: decodedBuf.duration,
+          file: new File([blob], `record_${idx}.wav`, { type: blob.type }),
+          isRecorded: true,
+          repeat: 1
+        };
+        showStatus('🎙️ 錄音配對成功！', 'ok');
+      } catch (err) {
+        showStatus('錄音轉換失敗：' + err.message, 'error');
+      }
+
+      recActiveIdx = null;
+      cleanupStream();
+      renderUnifiedModalContent();
+    };
+
+    recActiveIdx = idx;
+    recRecorder.start();
+
+    // Update to show STATE A (recording) immediately
+    renderUnifiedModalContent();
+
+    recInterval = setInterval(() => {
+      recDuration += 0.5;
+      const fmt = fmtDur(recDuration);
+      const timerEl = document.getElementById('rec-modal-timer');
+      if (timerEl) timerEl.textContent = fmt;
+    }, 500);
+
+  } catch (err) {
+    console.error(err);
+    alert('無法啟用麥克風進行錄音：' + err.message);
+    recActiveIdx = null;
+    renderUnifiedModalContent();
+  }
+}
+
+function stopRecording() {
+  if (recRecorder && recRecorder.state !== 'inactive') {
+    recRecorder.stop();
+  }
+}
+
+function cancelRecording() {
+  if (recRecorder && recRecorder.state !== 'inactive') {
+    recCancelled = true;
+    recRecorder.stop();
+  }
+}
+
+function cleanupStream() {
+  if (recStream) {
+    recStream.getTracks().forEach(t => t.stop());
+  }
+  recStream = null;
+  recRecorder = null;
+}
+
+/* ── Audio single-uploader in Modal ── */
+function triggerModalAudioUpload(idx) {
+  const loader = document.getElementById(`modal-audio-file-loader-${idx}`);
+  if (loader) loader.click();
+}
+
+async function handleModalAudioUpload(idx, files) {
+  if (!files.length) return;
+  const file = files[0];
+  showStatus(`載入單頁聲音檔：${file.name}…`, 'info');
+  try {
+    const ctx = new AudioContext();
+    const ab = await file.arrayBuffer();
+    const buf = await ctx.decodeAudioData(ab);
+    await ctx.close();
+
+    audioItems[idx] = {
+      id: genId(),
+      buffer: buf,
+      name: file.name,
+      duration: buf.duration,
+      file: file,
+      repeat: 1,
+      isRecorded: false
+    };
+
+    hideStatus();
+    renderUnifiedModalContent();
+  } catch (err) {
+    alert('無法解碼此聲音檔：' + err.message);
+    hideStatus();
+  }
+}
+
+function removeAudioInModal(idx) {
+  stopAndClearModalAudio();
+  audioItems[idx] = null;
+  renderUnifiedModalContent();
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   Pair Info Summary
+═══════════════════════════════════════════════════════════════ */
+function refreshPairInfo() {
+  const el = document.getElementById('pair-info');
+  const bn = document.getElementById('pair-banner');
+
+  if (mergeMode === 'bgm') {
+    const { totalSec, perImg } = calcBgmInfo();
+    const hasContent = imageItems.length > 0 || audioItems.some(Boolean);
+    if (!hasContent) { el.style.display = 'none'; }
+    else {
+      el.style.display = 'block';
+      const valid = audioItems.filter(Boolean);
+      const totalRepeat = valid.reduce((s, a) => s + (a.repeat || 1), 0);
+      let html = `<span style="color:var(--info)"><i class="fa-solid fa-circle-check"></i>&nbsp;`;
+      if (valid.length)
+        html += `音訊總長 <strong>${fmtDur(totalSec)}</strong>（共 ${valid.length} 個檔，總播放 ${totalRepeat} 次）`;
+      if (imageItems.length)
+        html += `&nbsp;·&nbsp; <strong>${imageItems.length}</strong> 張圖片，每張約 <strong>${fmtDur(perImg)}</strong>`;
+      html += `</span>`;
+      bn.innerHTML = html;
+    }
+  } else {
+    alignAudioInPairMode();
+    const totalPages = imageItems.length;
+    if (totalPages === 0) {
+      el.style.display = 'none';
+    } else {
+      el.style.display = 'block';
+      
+      const audioSeconds = audioItems.reduce((acc, a) => acc + (a ? a.duration : 3.0), 0);
+      const totalSec = audioSeconds + (totalPages * audioDelay);
+      const delayNote = audioDelay > 0 ? `（含每頁 ${audioDelay} 秒延遲）` : '';
+      
+      const recCount = audioItems.filter(a => a && a.isRecorded).length;
+      const uploadCount = audioItems.filter(a => a && !a.isRecorded).length;
+      const missingCount = audioItems.filter(a => !a).length;
+
+      let html = `<span><i class="fa-solid fa-circle-check"></i>&nbsp;
+        頁數共 <strong>${totalPages}</strong> 頁 &nbsp;·&nbsp; 影片總長約 <strong>${fmtDur(totalSec)}</strong>${delayNote}`;
+      
+      if (recCount > 0 || uploadCount > 0) {
+        html += ` (已配置 ${recCount} 頁錄音、${uploadCount} 頁上傳)`;
+      }
+      if (missingCount > 0) {
+        html += ` &nbsp;·&nbsp; <span class="warn"><i class="fa-solid fa-triangle-exclamation"></i> 還有 ${missingCount} 頁未配對聲音 (將自動設為 3 秒靜音停留)</span>`;
+      }
+      html += `</span>`;
+      bn.innerHTML = html;
+    }
+  }
+
+  renderPairList();
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   Pair List Rendering (Shows the main preview section)
+═══════════════════════════════════════════════════════════════ */
+let _pairDragging = null;
+
+function renderPairList() {
+  if (mergeMode === 'bgm') { renderBgmList(); return; }
+
+  alignAudioInPairMode();
+  const totalPages = imageItems.length;
+  const preview    = document.getElementById('pair-preview');
+  const listEl     = document.getElementById('pair-list');
+  const unpairedEl = document.getElementById('unpaired-section');
+  const sub        = document.getElementById('pair-preview-sub');
+
+  document.getElementById('pair-preview-icon').innerHTML = '<i class="fa-solid fa-link"></i>';
+  document.getElementById('pair-preview-title').textContent = ' 配對總覽';
+  document.getElementById('pair-preview-hint').innerHTML =
+    '<i class="fa-solid fa-arrows-up-down"></i> 拖曳列即可同時調整圖片與聲音順序，點選行區開啟工作圖層';
+
+  if (totalPages === 0) {
+    preview.style.display = 'none'; return;
+  }
+  preview.style.display = 'block';
+  sub.textContent = `(共 ${totalPages} 頁)`;
+  unpairedEl.style.display = 'none';
+
+  listEl.innerHTML = Array.from({ length: totalPages }, (_, i) => {
+    const img = imageItems[i], aud = audioItems[i];
+    
+    if (aud) {
+      return `
+        <div class="pair-card" data-idx="${i}" draggable="true" onclick="openUnifiedModal(${i})">
+          <span class="pc-grip" onclick="event.stopPropagation()"><i class="fa-solid fa-grip-vertical"></i></span>
+          <span class="pc-num">#${i + 1}</span>
+          <img class="pc-thumb" src="${img.url}" alt="">
+          <div class="pc-iside">
+            <div class="pc-iname" title="${img.name}">${img.name}</div>
+            <div class="pc-imeta">${img.img.naturalWidth} × ${img.img.naturalHeight} px</div>
+          </div>
+          <span class="pc-arrow"><i class="fa-solid fa-arrow-right"></i></span>
+          <span class="pc-aico" style="${aud.isRecorded ? 'color: var(--danger);' : ''}">
+            <i class="fa-solid ${aud.isRecorded ? 'fa-microphone' : 'fa-music'}"></i>
+          </span>
+          <div class="pc-aside">
+            <div class="pc-aname" title="${aud.name}">${aud.name}</div>
+            <div class="pc-adur">
+              <i class="fa-regular fa-clock"></i>&nbsp;${fmtDur(aud.duration)}
+              ${aud.isRecorded ? '<span class="badge-rec">🎙️ 錄製</span>' : ''}
+            </div>
+            <div style="margin-top: 0.25rem;">
+              <span style="font-size: 0.72rem; color: var(--accent2); background: rgba(167,139,250,0.12); padding: 2px 6px; border-radius: 4px;">
+                <i class="fa-solid fa-pen-to-square"></i> 按此編輯預覽
+              </span>
+            </div>
+          </div>
+        </div>`;
+    } else {
+      return `
+        <div class="pair-card empty-audio" data-idx="${i}" draggable="true" onclick="openUnifiedModal(${i})" style="border-left-color: var(--border);">
+          <span class="pc-grip" onclick="event.stopPropagation()"><i class="fa-solid fa-grip-vertical"></i></span>
+          <span class="pc-num" style="background: var(--bg3); color: var(--text2)">#${i + 1}</span>
+          <img class="pc-thumb" src="${img.url}" alt="">
+          <div class="pc-iside">
+            <div class="pc-iname" title="${img.name}">${img.name}</div>
+            <div class="pc-imeta">${img.img.naturalWidth} × ${img.img.naturalHeight} px</div>
+          </div>
+          <span class="pc-arrow"><i class="fa-solid fa-arrow-right"></i></span>
+          <span class="pc-aico" style="color: var(--border)"><i class="fa-solid fa-microphone-slash"></i></span>
+          <div class="pc-aside">
+            <div class="pc-aname" style="color: var(--text2); font-style: italic;">尚未配對聲音</div>
+            <div style="margin-top: 0.3rem;">
+              <button class="btn-sm" style="background: rgba(124,58,237,0.15); border-color: var(--accent);">
+                <i class="fa-solid fa-microphone"></i> 點此錄音／上傳聲音檔
+              </button>
+            </div>
+          </div>
+        </div>`;
+    }
+  }).join('');
+  
+  bindPairDrag(listEl);
+}
+
+function renderBgmList() {
+  const preview    = document.getElementById('pair-preview');
+  const listEl     = document.getElementById('pair-list');
+  const unpairedEl = document.getElementById('unpaired-section');
+  const sub        = document.getElementById('pair-preview-sub');
+
+  document.getElementById('pair-preview-icon').innerHTML = '<i class="fa-solid fa-record-vinyl"></i>';
+  document.getElementById('pair-preview-title').textContent = ' 時間分配';
+  document.getElementById('pair-preview-hint').innerHTML =
+    '<i class="fa-solid fa-arrows-up-down"></i> 拖曳可調整圖片順序';
+
+  if (imageItems.length === 0) { preview.style.display = 'none'; return; }
+  preview.style.display = 'block';
+  unpairedEl.style.display = 'none';
+
+  const { totalSec, perImg } = calcBgmInfo();
+  sub.textContent = `(${imageItems.length} 張，各 ${fmtDur(perImg)})`;
+
+  listEl.innerHTML = imageItems.map((img, i) => `
+    <div class="time-card" data-idx="${i}" draggable="true">
+      <span class="tc-grip"><i class="fa-solid fa-grip-vertical"></i></span>
+      <span class="tc-num">#${i + 1}</span>
+      <img class="tc-thumb" src="${img.url}" alt="">
+      <div class="tc-iside">
+        <div class="tc-iname" title="${img.name}">${img.name}</div>
+        <div class="tc-imeta">${img.img.naturalWidth} × ${img.img.naturalHeight} px</div>
+      </div>
+      <span class="tc-dur"><i class="fa-regular fa-clock"></i>&nbsp;${fmtDur(perImg)}</span>
+    </div>`).join('');
+  bindBgmDrag(listEl);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   Drag Swappings
+═══════════════════════════════════════════════════════════════ */
+let _bgmDragging = null;
+function bindBgmDrag(listEl) {
+  listEl.querySelectorAll('.time-card').forEach(el => {
+    el.addEventListener('dragstart', e => {
+      _bgmDragging = el; el.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+    });
+    el.addEventListener('dragend', () => {
+      el.classList.remove('dragging');
+      listEl.querySelectorAll('.time-card').forEach(x => x.classList.remove('drag-over'));
+      _bgmDragging = null;
+    });
+    el.addEventListener('dragover', e => {
+      e.preventDefault();
+      if (el !== _bgmDragging) {
+        listEl.querySelectorAll('.time-card').forEach(x => x.classList.remove('drag-over'));
+        el.classList.add('drag-over');
+      }
+    });
+    el.addEventListener('drop', e => {
+      e.preventDefault();
+      if (!_bgmDragging || _bgmDragging === el) return;
+      const fi = parseInt(_bgmDragging.dataset.idx);
+      const ti = parseInt(el.dataset.idx);
+      if (fi === ti) return;
+      const [moved] = imageItems.splice(fi, 1);
+      imageItems.splice(ti, 0, moved);
+      renderImgList();
+      renderBgmList();
+    });
+  });
+}
+
+function bindPairDrag(listEl) {
+  listEl.querySelectorAll('.pair-card').forEach(el => {
+    el.addEventListener('dragstart', e => {
+      _pairDragging = el;
+      el.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+    });
+    el.addEventListener('dragend', () => {
+      el.classList.remove('dragging');
+      listEl.querySelectorAll('.pair-card').forEach(x => x.classList.remove('drag-over'));
+      _pairDragging = null;
+    });
+    el.addEventListener('dragover', e => {
+      e.preventDefault();
+      if (el !== _pairDragging) {
+        listEl.querySelectorAll('.pair-card').forEach(x => x.classList.remove('drag-over'));
+        el.classList.add('drag-over');
+      }
+    });
+    el.addEventListener('drop', e => {
+      e.preventDefault();
+      if (!_pairDragging || _pairDragging === el) return;
+      const fi = parseInt(_pairDragging.dataset.idx);
+      const ti = parseInt(el.dataset.idx);
+      if (fi === ti) return;
+      /* Move image and audio together to perfectly persist aligned mappings */
+      const [mi] = imageItems.splice(fi, 1);
+      imageItems.splice(ti, 0, mi);
+      const [ma] = audioItems.splice(fi, 1);
+      audioItems.splice(ti, 0, ma);
+      
+      renderImgList();
+      renderAudioList();
+      refreshPairInfo();
+    });
+  });
+}
+
+/* ── Standard Column Sort Dragging ── */
+let _dragging = null;
+
+function bindDrag(listEl, arr, rerender) {
+  listEl.querySelectorAll('.file-item').forEach(el => {
+    el.addEventListener('dragstart', e => {
+      if (e.dataTransfer.types && [...e.dataTransfer.types].includes('Files')) return;
+      _dragging = el;
+      el.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/plain', el.dataset.id);
+    });
+    el.addEventListener('dragend', () => {
+      el.classList.remove('dragging');
+      listEl.querySelectorAll('.file-item').forEach(x => x.classList.remove('drag-over'));
+      _dragging = null;
+    });
+    el.addEventListener('dragover', e => {
+      if ([...e.dataTransfer.types].includes('Files')) return;
+      e.preventDefault();
+      if (el !== _dragging) {
+        listEl.querySelectorAll('.file-item').forEach(x => x.classList.remove('drag-over'));
+        el.classList.add('drag-over');
+      }
+    });
+    el.addEventListener('drop', e => {
+      e.preventDefault();
+      if (!_dragging || _dragging === el) return;
+      const fromId = _dragging.dataset.id;
+      const toId   = el.dataset.id;
+      const fi = arr.findIndex(x => x && x.id === fromId);
+      const ti = arr.findIndex(x => x && x.id === toId);
+      if (fi < 0 || ti < 0) return;
+      const [moved] = arr.splice(fi, 1);
+      arr.splice(ti, 0, moved);
+
+      // Splicing synced alignment swaps simultaneously
+      if (arr === imageItems && mergeMode === 'pair') {
+        const [movedAudio] = audioItems.splice(fi, 1);
+        audioItems.splice(ti, 0, movedAudio);
+        renderAudioList();
+      }
+      if (arr === audioItems && mergeMode === 'pair') {
+        const [movedImg] = imageItems.splice(fi, 1);
+        imageItems.splice(ti, 0, movedImg);
+        renderImgList();
+      }
+
+      rerender();
+      refreshPairInfo();
+    });
+  });
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   Status Logger helpers
+═══════════════════════════════════════════════════════════════ */
+function showStatus(msg, type) {
+  const el = document.getElementById('status-box');
+  el.textContent = msg;
+  el.className = `status-box show ${type}`;
+}
+function hideStatus() {
+  document.getElementById('status-box').classList.remove('show');
+}
+function setProgress(ratio, label) {
+  const per = Math.round(ratio * 100);
+  document.getElementById('progress-fill').style.width  = `${per}%`;
+  document.getElementById('progress-label').textContent = label;
+  
+  // Update overlay progress too
+  document.getElementById('overlay-progress-fill').style.width = `${per}%`;
+  document.getElementById('overlay-progress-label').textContent = `${per}% · ${label}`;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   Canvas Rendering and Transitions
+═══════════════════════════════════════════════════════════════ */
+function drawFit(ctx, img, W, H, ox = 0, oy = 0) {
+  const s  = Math.max(W / img.naturalWidth, H / img.naturalHeight);
+  const dw = img.naturalWidth  * s;
+  const dh = img.naturalHeight * s;
+  ctx.drawImage(img, (W - dw) / 2 + ox, (H - dh) / 2 + oy, dw, dh);
+}
+
+function applyTransition(ctx, imgA, imgB, p, W, H) {
+  ctx.clearRect(0, 0, W, H);
+  ctx.fillStyle = '#000';
+  ctx.fillRect(0, 0, W, H);
+
+  switch (selTrans) {
+    case 'none':
+      drawFit(ctx, p < 0.5 ? imgA : imgB, W, H);
+      break;
+
+    case 'fade':
+      drawFit(ctx, imgA, W, H);
+      ctx.globalAlpha = p;
+      drawFit(ctx, imgB, W, H);
+      ctx.globalAlpha = 1;
+      break;
+
+    case 'slide-left': {
+      const ox = W * p;
+      drawFit(ctx, imgA, W, H, -ox);
+      drawFit(ctx, imgB, W, H,  W - ox);
+      break;
+    }
+
+    case 'slide-right': {
+      const ox = W * p;
+      drawFit(ctx, imgA, W, H, ox);
+      drawFit(ctx, imgB, W, H, ox - W);
+      break;
+    }
+
+    case 'zoom': {
+      const s  = 1 + p * 0.25;
+      const dw = W * s, dh = H * s;
+      ctx.drawImage(imgA, (W - dw) / 2, (H - dh) / 2, dw, dh);
+      ctx.globalAlpha = p;
+      drawFit(ctx, imgB, W, H);
+      ctx.globalAlpha = 1;
+      break;
+    }
+
+    case 'wipe': {
+      const wh = Math.round(H * p);
+      ctx.save();
+      ctx.beginPath(); ctx.rect(0, 0, W, wh); ctx.clip();
+      drawFit(ctx, imgB, W, H);
+      ctx.restore();
+      ctx.save();
+      ctx.beginPath(); ctx.rect(0, wh, W, H - wh); ctx.clip();
+      drawFit(ctx, imgA, W, H);
+      ctx.restore();
+      break;
+    }
+
+    default:
+      drawFit(ctx, imgB, W, H);
+  }
+}
+
+function drawFrame(ctx, imgs, durs, t, W, H) {
+  const n = imgs.length;
+  if (n === 0) return;
+
+  /* Cumulative boundaries */
+  const bnd = [0];
+  for (const d of durs) bnd.push(bnd[bnd.length - 1] + d);
+  const total = bnd[n];
+  t = Math.max(0, Math.min(t, total - 1e-5));
+
+  /* Find current segment */
+  let seg = n - 1;
+  for (let i = 0; i < n; i++) {
+    if (t < bnd[i + 1]) { seg = i; break; }
+  }
+
+  ctx.fillStyle = '#000';
+  ctx.fillRect(0, 0, W, H);
+
+  /* Check transition zones */
+  for (let i = 0; i < n - 1; i++) {
+    const boundary = bnd[i + 1];
+    const effDur   = Math.min(selTransDur, durs[i] * 0.8, durs[i + 1] * 0.8);
+    if (effDur < 0.05) continue;
+    const halfT = effDur / 2;
+    if (t >= boundary - halfT && t <= boundary + halfT) {
+      const p = (t - (boundary - halfT)) / effDur;
+      applyTransition(ctx, imgs[i], imgs[i + 1], Math.max(0, Math.min(1, p)), W, H);
+      return;
+    }
+  }
+
+  drawFit(ctx, imgs[seg], W, H);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   Video Export Engine
+═══════════════════════════════════════════════════════════════ */
+async function startExport() {
+  if (exporting) return;
+
+  /* ── Validate ── */
+  if (mergeMode === 'bgm') {
+    if (!imageItems.length || !audioItems.filter(Boolean).length) {
+      showStatus('請先匯入圖片和聲音檔！', 'error'); return;
+    }
+  } else {
+    if (imageItems.length === 0) {
+      showStatus('請先匯入圖片清單！', 'error'); return;
+    }
+  }
+
+  exporting = true;
+  
+  // Show Anti-Throttling Overlay
+  const overlay = document.getElementById('export-overlay');
+  overlay.classList.add('show');
+  
+  // Request Wake Lock if possible
+  let wakeLock = null;
+  if ('wakeLock' in navigator) {
+    try { wakeLock = await navigator.wakeLock.request('screen'); } catch (err) {}
+  }
+
+  const btn = document.getElementById('btn-export');
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 匯出中…';
+  hideStatus();
+
+  const pw = document.getElementById('progress-wrap');
+  pw.classList.add('show');
+  setProgress(0, '準備中…');
+
+  try {
+    const res = RESOLUTIONS[selRes];
+    const W = res.w, H = res.h;
+
+    const canvas = document.getElementById('export-canvas');
+    canvas.width  = W;
+    canvas.height = H;
+    const ctx = canvas.getContext('2d');
+
+    let imgs, segDurs, total;
+
+    if (mergeMode === 'bgm') {
+      imgs = imageItems.map(x => x.img);
+      const { totalSec } = calcBgmInfo();
+      const perImg = totalSec / imgs.length;
+      segDurs = imgs.map(() => perImg);
+      total   = totalSec;
+    } else {
+      imgs    = imageItems.map(x => x.img);
+      segDurs = [];
+      
+      // Keep alignment - missing audio pages are held at 3s fallback duration
+      for (let i = 0; i < imageItems.length; i++) {
+        const aud = audioItems[i];
+        if (aud) {
+          segDurs.push(audioDelay + aud.duration);
+        } else {
+          segDurs.push(audioDelay + 3.0); 
+        }
+      }
+      total = segDurs.reduce((s, d) => s + d, 0);
+    }
+
+    /* ── Audio context & scheduling ── */
+    const audioCtx  = new (window.AudioContext || window.webkitAudioContext)();
+    const audioDest = audioCtx.createMediaStreamDestination();
+
+    const LEAD   = 0.5; // lead timing
+    const t0_abs = audioCtx.currentTime + LEAD;
+
+    let schedAt = t0_abs;
+    if (mergeMode === 'bgm') {
+      const valid = audioItems.filter(Boolean);
+      for (const aud of valid) {
+        const reps = aud.repeat || 1;
+        for (let r = 0; r < reps; r++) {
+          const src = audioCtx.createBufferSource();
+          src.buffer = aud.buffer;
+          src.connect(audioDest);
+          src.start(schedAt);
+          schedAt += aud.duration;
+        }
+      }
+    } else {
+      for (let i = 0; i < imageItems.length; i++) {
+        const aud = audioItems[i];
+        if (aud) {
+          const src = audioCtx.createBufferSource();
+          src.buffer = aud.buffer;
+          src.connect(audioDest);
+          src.start(schedAt + audioDelay);
+        }
+        schedAt += segDurs[i];
+      }
+    }
+
+    /* ── Combined stream ── */
+    const vidStream  = canvas.captureStream(30);
+    const combined   = new MediaStream([
+      ...vidStream.getVideoTracks(),
+      ...audioDest.stream.getAudioTracks(),
+    ]);
+
+    const mimes = [
+      'video/webm;codecs=vp9,opus',
+      'video/webm;codecs=vp8,opus',
+      'video/webm',
+    ];
+    const mime = mimes.find(m => MediaRecorder.isTypeSupported(m)) || 'video/webm';
+
+    const chunks  = [];
+    const recorder = new MediaRecorder(combined, {
+      mimeType: mime,
+      videoBitsPerSecond: BITRATES[selRes],
+    });
+    recorder.ondataavailable = e => { if (e.data.size > 0) chunks.push(e.data); };
+    const done = new Promise(res => recorder.onstop = res);
+    recorder.start(100);
+
+    /* ── Render loop ── */
+    await new Promise(resolve => {
+      function frame() {
+        if (!exporting) return; 
+        
+        const elapsed = audioCtx.currentTime - t0_abs;
+        const t       = Math.max(0, elapsed);
+
+        drawFrame(ctx, imgs, segDurs, t, W, H);
+
+        const ratio = Math.min(t / total, 1);
+        setProgress(ratio, `${fmtDur(t)} / ${fmtDur(total)}`);
+
+        if (elapsed >= total + 0.5) {
+          resolve();
+        } else {
+          requestAnimationFrame(frame);
+        }
+      }
+
+      function waitStart() {
+        if (audioCtx.currentTime >= t0_abs - 0.05) requestAnimationFrame(frame);
+        else setTimeout(waitStart, 16);
+      }
+      waitStart();
+    });
+
+    recorder.stop();
+    showStatus('影片處理中，即將下載…', 'info');
+    await done;
+    await audioCtx.close();
+
+    /* ── Download ── */
+    const blob = new Blob(chunks, { type: mime });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href     = url;
+    a.download = `圖音合併_${mergeMode === 'bgm' ? '背景音樂' : '圖聲配對'}_${selRes}_${Date.now()}.webm`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 5000);
+
+    setProgress(1, '完成！');
+    showStatus('✅ 影片匯出成功！', 'ok');
+
+  } catch (err) {
+    console.error(err);
+    showStatus('匯出失敗：' + err.message, 'error');
+  } finally {
+    exporting = false;
+    overlay.classList.remove('show');
+    if (wakeLock) wakeLock.release();
+    
+    const btn = document.getElementById('btn-export');
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fa-solid fa-video"></i> 匯出影片';
+  }
+}
+
+/* ── HTML Audiobook Export ──────────────────────────────────── */
+async function imgToBase64(img, maxWidth = 1024) {
+  return new Promise(resolve => {
+    const c = document.createElement('canvas');
+    const scale = img.naturalWidth > maxWidth ? maxWidth / img.naturalWidth : 1;
+    c.width  = Math.round(img.naturalWidth  * scale);
+    c.height = Math.round(img.naturalHeight * scale);
+    c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+    resolve(c.toDataURL('image/jpeg', 0.88));
+  });
+}
+
+function fileToDataUrl(file) {
+  return new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload  = e => resolve(e.target.result);
+    r.onerror = reject;
+    r.readAsDataURL(file);
+  });
+}
+
+async function exportHtmlBook() {
+  if (imageItems.length === 0) { showStatus('請先上傳圖片', 'error'); return; }
+  const rawTitle = prompt('請輸入繪本書名：', '我的有聲書');
+  if (rawTitle === null) return;
+  const bookTitle = rawTitle.trim() || '有聲書';
+  const btn = document.getElementById('btn-book');
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 處理中…';
+  showStatus('正在打包有聲書…', '');
+  try {
+    const bd = { mode: mergeMode, audioDelay: audioDelay, title: bookTitle, pages: [], bgmTracks: [] };
+    for (let i = 0; i < imageItems.length; i++) {
+      const img = imageItems[i];
+      const b64 = await imgToBase64(img.img);
+      if (mergeMode === 'pair') {
+        const aud = audioItems[i];
+        const audUrl = (aud && aud.file) ? await fileToDataUrl(aud.file) : null;
+        bd.pages.push({
+          img: b64,
+          audio: audUrl,
+          duration: aud ? aud.duration : 3,
+          width: img.img.naturalWidth,
+          height: img.img.naturalHeight
+        });
+      } else {
+        bd.pages.push({
+          img: b64,
+          width: img.img.naturalWidth,
+          height: img.img.naturalHeight
+        });
+      }
+    }
+    if (mergeMode === 'bgm') {
+      const { perImg } = calcBgmInfo();
+      bd.perPageDuration = perImg;
+      const valid = audioItems.filter(Boolean);
+      for (const aud of valid) {
+        const audUrl = aud.file ? await fileToDataUrl(aud.file) : null;
+        bd.bgmTracks.push({ audio: audUrl, repeat: aud.repeat || 1, duration: aud.duration });
+      }
+    }
+    const html = generateBookHtml(bd);
+    const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = bookTitle + '.html';
+    a.click();
+    showStatus('有聲書已下載！', 'ok');
+  } catch (err) {
+    showStatus('匯出失敗：' + err.message, 'error');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fa-solid fa-book-open"></i> 匯出 HTML 有聲書';
+  }
+}
+
+function generateBookHtml(bd) {
+  const safeData = JSON.stringify(bd).replace(/<\/script>/gi, '<\\/script>');
+  return `<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>有聲書</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#111;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;font-family:sans-serif;color:#fff;overflow:hidden;gap:.75rem;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
+#startup{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;z-index:100;overflow:hidden}
+#startup-bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;filter:blur(12px) brightness(.35);transform:scale(1.08);z-index:0}
+.modal{position:relative;z-index:1;background:rgba(20,15,40,.82);backdrop-filter:blur(6px);border:1px solid rgba(255,255,255,.12);border-radius:18px;padding:2.5rem 3rem;text-align:center;max-width:380px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,.7)}
+.modal h2{font-size:1.7rem;margin-bottom:.4rem;letter-spacing:.02em}
+.modal-sub{color:#c4b5fd;font-size:.88rem;margin-bottom:.3rem;font-weight:600}
+.modal p{color:#a0a0c0;font-size:.88rem;margin-bottom:1.8rem}
+.modal-btns{display:flex;gap:1rem;justify-content:center;flex-wrap:wrap}
+.modal-btn{padding:.75rem 1.8rem;border:none;border-radius:8px;font-size:1rem;font-weight:700;cursor:pointer;transition:transform .15s,box-shadow .15s}
+.modal-btn:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(0,0,0,.4)}
+.btn-auto{background:linear-gradient(135deg,#7c3aed,#a855f7);color:#fff}
+.btn-manual{background:#374151;color:#e5e7eb}
+#scene{position:relative;width:var(--scene-w,min(96vw,700px));height:var(--scene-h,min(72vh,525px));max-width:100%;max-height:100%;perspective:1200px;display:none;border-radius:10px;overflow:hidden;box-shadow:0 12px 40px rgba(0,0,0,.6);transition:width .3s,height .3s,border-radius .3s;touch-action:manipulation}
+.page{position:absolute;inset:0;background:#000;backface-visibility:hidden}
+.page img{width:100%;height:100%;object-fit:contain}
+.page-cur{z-index:2}
+.page-next{z-index:1}
+.flip-fwd .page-cur{animation:flipOut .5s ease-in-out forwards}
+.flip-fwd .page-next{animation:flipIn .5s ease-in-out forwards}
+.flip-back .page-cur{animation:flipOutR .5s ease-in-out forwards}
+.flip-back .page-next{animation:flipInR .5s ease-in-out forwards}
+@keyframes flipOut{0%{transform:rotateY(0)}100%{transform:rotateY(-90deg);opacity:0}}
+@keyframes flipIn{0%{transform:rotateY(90deg);opacity:0}100%{transform:rotateY(0)}}
+@keyframes flipOutR{0%{transform:rotateY(0)}100%{transform:rotateY(90deg);opacity:0}}
+@keyframes flipInR{0%{transform:rotateY(-90deg);opacity:0}100%{transform:rotateY(0)}}
+#bar{display:none;width:var(--scene-w,min(96vw,700px));flex-direction:column;gap:.5rem;transition:width .3s;padding:.5rem .25rem 0}
+.prog-track{width:100%;height:6px;background:#333;border-radius:3px;overflow:hidden}
+.prog-fill{height:100%;background:linear-gradient(90deg,#7c3aed,#a855f7);border-radius:3px;width:0%;transition:width .4s}
+.ctrl-row{display:flex;align-items:center;gap:.5rem;flex-wrap:wrap}
+.ctrl-btn{background:none;border:1px solid #444;color:#ccc;font-size:1rem;cursor:pointer;padding:.3rem .7rem;border-radius:6px;transition:color .2s,background .2s,border-color .2s}
+.ctrl-btn:hover{color:#fff;background:#333;border-color:#666}
+.page-info{flex:1;text-align:center;font-size:.85rem;color:#aaa}
+.ctrl-btn[disabled]{opacity:.45;cursor:not-allowed}
+input[type=range]{accent-color:#a855f7;width:72px}
+#credit{position:fixed;bottom:10px;right:12px;font-size:.7rem;color:rgba(255,255,255,.4);background:rgba(0,0,0,.3);padding:.2rem .55rem;border-radius:4px;z-index:300;line-height:1.6}
+#credit a{color:rgba(255,255,255,.55);text-decoration:none}
+#credit a:hover{color:#fff}
+html.is-fullscreen,body.is-fullscreen{background:#000}
+html.is-fullscreen body,:fullscreen body,:-webkit-full-screen body{background:#000;justify-content:center}
+html.is-fullscreen #scene,:fullscreen #scene,:-webkit-full-screen #scene{border-radius:0}
+html.is-fullscreen #bar,:fullscreen #bar,:-webkit-full-screen #bar{padding:0 .5rem}
+</style>
+</head>
+<body>
+<div id="startup">
+  <img id="startup-bg" src="" alt="">
+  <div class="modal">
+    <h2>📖 <span id="book-title-h"></span></h2>
+    <div class="modal-sub" id="book-page-count"></div>
+    <p>請選擇播放方式</p>
+    <div class="modal-btns">
+      <button class="modal-btn btn-auto" onclick="selMode('auto')">▶ 自動播放</button>
+      <button class="modal-btn btn-manual" onclick="selMode('manual')">手動翻頁</button>
+    </div>
+  </div>
+</div>
+<div id="scene">
+  <div class="page page-next"><img id="img-next" src="" alt=""></div>
+  <div class="page page-cur"><img id="img-cur" src="" alt=""></div>
+</div>
+<div id="bar">
+  <div class="prog-track"><div class="prog-fill" id="prog-fill"></div></div>
+  <div class="ctrl-row">
+    <button class="ctrl-btn" onclick="nav(-1)" title="上一頁">上一頁</button>
+    <button class="ctrl-btn" onclick="nav(1)"  title="下一頁">下一頁</button>
+    <button class="ctrl-btn" id="btn-play" onclick="toggleAuto()" title="開始或停止自動播放">開始自動</button>
+    <button class="ctrl-btn" id="btn-audio" onclick="toggleCurrentAudio()" title="播放或暫停聲音">播放聲音</button>
+    <button class="ctrl-btn" onclick="backToStartup()" title="回到播放方式選擇">回到選擇</button>
+    <span class="page-info" id="page-info">1 / 1</span>
+    <input type="range" id="vol" min="0" max="1" step="0.05" value="1" oninput="setVol(this.value)" title="音量">
+    <button class="ctrl-btn" onclick="toggleFS()" title="全螢幕">全螢幕</button>
+  </div>
+</div>
+<div id="credit">楊貴傑老師製作 · 原始作者：阿剛老師</div>
+<script>
+const bd = ${safeData};
+let cur = 0, autoPlay = false, timer = null, flipping = false;
+const scene    = document.getElementById('scene');
+const bar      = document.getElementById('bar');
+const imgCur   = document.getElementById('img-cur');
+const imgNext  = document.getElementById('img-next');
+const progFill = document.getElementById('prog-fill');
+const pageInfo = document.getElementById('page-info');
+const btnPlay  = document.getElementById('btn-play');
+const rootEl   = document.documentElement;
+const btnAudio = document.getElementById('btn-audio');
+let playMode = null;
+
+// Init startup screen
+const title = bd.title || '有聲書';
+document.title = title;
+document.getElementById('book-title-h').textContent = title;
+document.getElementById('book-page-count').textContent = bd.pages.length + ' 頁';
+if (bd.pages.length) document.getElementById('startup-bg').src = bd.pages[0].img;
+
+let pairAudio = null;
+if (bd.mode === 'pair') { pairAudio = new Audio(); pairAudio.volume = 1; }
+
+let bgmAudios = [];
+if (bd.mode === 'bgm' && bd.bgmTracks && bd.bgmTracks.length) {
+  bgmAudios = bd.bgmTracks.map(t => { const a = new Audio(t.audio); a.volume = 1; return a; });
+}
+let bgmIdx = 0, bgmRep = 0;
+function playBgmFrom(idx, rep) {
+  bgmIdx = idx; bgmRep = rep;
+  if (idx >= bgmAudios.length) return;
+  const a = bgmAudios[idx];
+  a.currentTime = 0;
+  a.play().catch(()=>{});
+  a.onended = () => {
+    const reps = bd.bgmTracks[idx].repeat || 1;
+    if (rep + 1 < reps) playBgmFrom(idx, rep + 1);
+    else playBgmFrom(idx + 1, 0);
+  };
+}
+
+function selMode(mode) {
+  playMode = mode;
+  autoPlay = mode === 'auto';
+  document.getElementById('startup').style.display = 'none';
+  scene.style.display = 'block';
+  bar.style.display   = 'flex';
+  showPage(0);
+  updatePlayButtons();
+  if (mode === 'auto') {
+    schedNext();
+    startAudioForCurrentPage();
+  }
+}
+
+function backToStartup() {
+  clearTimer();
+  autoPlay = false;
+  playMode = null;
+  stopAllAudio();
+  document.getElementById('startup').style.display = 'flex';
+  scene.style.display = 'none';
+  bar.style.display   = 'none';
+  updatePlayButtons();
+}
+
+function showPage(idx) {
+  cur = Math.max(0, Math.min(bd.pages.length - 1, idx));
+  imgCur.src  = bd.pages[cur].img;
+  const nxt   = Math.min(cur + 1, bd.pages.length - 1);
+  imgNext.src = bd.pages[nxt].img;
+  pageInfo.textContent = (cur + 1) + ' / ' + bd.pages.length;
+  progFill.style.width = ((cur + 1) / bd.pages.length * 100) + '%';
+  fitScene();
+}
+
+function nav(dir) {
+  if (flipping) return;
+  const nxt = cur + dir;
+  if (nxt < 0 || nxt >= bd.pages.length) return;
+  clearTimer();
+  doFlip(nxt, dir > 0);
+}
+
+function doFlip(nxt, forward) {
+  flipping = true;
+  imgNext.src = bd.pages[nxt].img;
+  scene.classList.add(forward ? 'flip-fwd' : 'flip-back');
+  setTimeout(() => {
+    scene.classList.remove('flip-fwd', 'flip-back');
+    cur = nxt;
+    imgCur.src = bd.pages[cur].img;
+    imgNext.src = bd.pages[Math.min(cur + 1, bd.pages.length - 1)].img;
+    pageInfo.textContent = (cur + 1) + ' / ' + bd.pages.length;
+    progFill.style.width = ((cur + 1) / bd.pages.length * 100) + '%';
+    flipping = false;
+    if (playMode === 'auto') startAudioForCurrentPage();
+    else if (bd.mode === 'pair' && pairAudio) {
+      pairAudio.pause();
+      pairAudio.currentTime = 0;
+    }
+    if (autoPlay) {
+      if (cur < bd.pages.length - 1) schedNext();
+      else { autoPlay = false; updatePlayButtons(); }
+    }
+    updatePlayButtons();
+  }, 520);
+}
+
+function playPageAudio(idx) {
+  if (!pairAudio || !bd.pages[idx].audio) return;
+  pairAudio.pause();
+  pairAudio.currentTime = 0;
+  pairAudio.src = bd.pages[idx].audio;
+  setTimeout(() => pairAudio.play().catch(()=>{}), (bd.audioDelay || 0) * 1000);
+}
+
+function stopAllAudio() {
+  if (pairAudio) {
+    pairAudio.pause();
+    pairAudio.currentTime = 0;
+  }
+  bgmAudios.forEach(a => {
+    a.pause();
+    a.currentTime = 0;
+  });
+}
+
+function startAudioForCurrentPage() {
+  if (bd.mode === 'pair') {
+    playPageAudio(cur);
+    return;
+  }
+  if (bd.mode === 'bgm' && bgmAudios.length) {
+    const bgm = bgmAudios[bgmIdx];
+    if (!bgm) return;
+    if (bgm.paused) {
+      if (bgm.currentTime === 0) playBgmFrom(bgmIdx, bgmRep);
+      else bgm.play().catch(()=>{});
+    }
+  }
+}
+
+function pageRatio() {
+  const page = bd.pages[cur] || bd.pages[0] || {};
+  const w = Number(page.width) || 4;
+  const h = Number(page.height) || 3;
+  return w / h;
+}
+
+function fitScene() {
+  const isFs = !!(document.fullscreenElement || document.webkitFullscreenElement || rootEl.classList.contains('is-fullscreen'));
+  const vw = window.innerWidth;
+  const vh = window.innerHeight;
+  const ratio = pageRatio();
+  const sidePad = isFs ? 0 : 24;
+  const topPad = isFs ? 8 : 48;
+  const bottomPad = isFs ? 72 : 138;
+  const maxW = Math.max(160, vw - sidePad);
+  const maxH = Math.max(120, vh - topPad - bottomPad);
+  let w = maxW;
+  let h = w / ratio;
+  if (h > maxH) {
+    h = maxH;
+    w = h * ratio;
+  }
+  rootEl.style.setProperty('--scene-w', Math.floor(w) + 'px');
+  rootEl.style.setProperty('--scene-h', Math.floor(h) + 'px');
+}
+
+function schedNext() {
+  if (!autoPlay) return;
+  const dur = bd.mode === 'pair'
+    ? ((bd.pages[cur].duration || 3) + (bd.audioDelay || 0))
+    : (bd.perPageDuration || 5);
+  clearTimer();
+  timer = setTimeout(() => { if (autoPlay && cur + 1 < bd.pages.length) doFlip(cur + 1, true); }, dur * 1000);
+}
+
+function clearTimer() { if (timer) { clearTimeout(timer); timer = null; } }
+
+function toggleAuto() {
+  autoPlay = !autoPlay;
+  playMode = autoPlay ? 'auto' : 'manual';
+  if (autoPlay) { schedNext(); startAudioForCurrentPage(); }
+  else {
+    clearTimer();
+    stopAllAudio();
+  }
+  updatePlayButtons();
+}
+
+function isCurrentAudioPlaying() {
+  if (bd.mode === 'pair') return !!(pairAudio && !pairAudio.paused);
+  const bgm = bgmAudios[bgmIdx];
+  return !!(bgm && !bgm.paused);
+}
+
+function updatePlayButtons() {
+  btnPlay.textContent = autoPlay ? '停止自動' : '開始自動';
+  const hasPairAudio = !!(bd.mode === 'pair' && bd.pages[cur] && bd.pages[cur].audio);
+  const hasBgmAudio = !!(bd.mode === 'bgm' && bgmAudios.length);
+  const hasAudio = hasPairAudio || hasBgmAudio;
+  btnAudio.disabled = !hasAudio;
+  btnAudio.textContent = hasAudio && isCurrentAudioPlaying() ? '暫停聲音' : '播放聲音';
+}
+
+function setVol(v) {
+  const vol = parseFloat(v);
+  if (pairAudio) pairAudio.volume = vol;
+  bgmAudios.forEach(a => a.volume = vol);
+}
+
+function toggleFS() {
+  const doc = document;
+  const entering = !(doc.fullscreenElement || doc.webkitFullscreenElement || rootEl.classList.contains('is-fullscreen'));
+  if (entering) {
+    if (rootEl.requestFullscreen) {
+      const req = rootEl.requestFullscreen();
+      if (req && req.catch) req.catch(() => rootEl.classList.add('is-fullscreen'));
+    }
+    else if (rootEl.webkitRequestFullscreen) rootEl.webkitRequestFullscreen();
+    else rootEl.classList.add('is-fullscreen');
+  } else if (doc.fullscreenElement || doc.webkitFullscreenElement) {
+    if (doc.exitFullscreen) doc.exitFullscreen();
+    else if (doc.webkitExitFullscreen) doc.webkitExitFullscreen();
+  } else {
+    rootEl.classList.remove('is-fullscreen');
+  }
+  setTimeout(fitScene, 60);
+}
+
+function toggleCurrentAudio() {
+  if (pairAudio && bd.mode === 'pair' && bd.pages[cur] && bd.pages[cur].audio) {
+    if (pairAudio.src !== bd.pages[cur].audio) pairAudio.src = bd.pages[cur].audio;
+    if (pairAudio.paused) pairAudio.play().catch(()=>{});
+    else pairAudio.pause();
+    updatePlayButtons();
+    return;
+  }
+  const bgm = bgmAudios[bgmIdx];
+  if (!bgm) return;
+  if (bgm.paused) {
+    if (bgm.currentTime === 0) playBgmFrom(bgmIdx, bgmRep);
+    else bgm.play().catch(()=>{});
+  } else bgm.pause();
+  updatePlayButtons();
+}
+
+let tx0 = 0, ty0 = 0, tStart = 0;
+scene.addEventListener('touchstart', e => {
+  tx0 = e.touches[0].clientX;
+  ty0 = e.touches[0].clientY;
+  tStart = Date.now();
+}, { passive: true });
+scene.addEventListener('touchend',   e => {
+  const touch = e.changedTouches[0];
+  const dx = touch.clientX - tx0;
+  const dy = touch.clientY - ty0;
+  const dt = Date.now() - tStart;
+  if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.2) nav(dx < 0 ? 1 : -1);
+  else if (Math.abs(dx) < 12 && Math.abs(dy) < 12 && dt < 350) toggleCurrentAudio();
+}, { passive: true });
+
+window.addEventListener('resize', fitScene);
+window.addEventListener('orientationchange', () => setTimeout(fitScene, 120));
+document.addEventListener('fullscreenchange', fitScene);
+document.addEventListener('webkitfullscreenchange', fitScene);
+
+if (pairAudio) {
+  pairAudio.addEventListener('play', updatePlayButtons);
+  pairAudio.addEventListener('pause', updatePlayButtons);
+  pairAudio.addEventListener('ended', updatePlayButtons);
+}
+bgmAudios.forEach(a => {
+  a.addEventListener('play', updatePlayButtons);
+  a.addEventListener('pause', updatePlayButtons);
+  a.addEventListener('ended', updatePlayButtons);
+});
+
+if (bd.pages.length) {
+  showPage(0);
+  fitScene();
+  updatePlayButtons();
+}
+<\/script>
+</body>
+</html>`;
+}
+</script>
+</body>
+</html>
