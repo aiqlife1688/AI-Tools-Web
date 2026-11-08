@@ -171,11 +171,44 @@ body.dark-mode .ygj-panel{background:#243450!important;color:#f4f8ff!important}
 body.dark-mode .ygj-panel a{color:#f4f8ff!important}
 body.dark-mode :is(button,input,select,textarea):focus-visible{outline:2px solid #67e8f9;outline-offset:2px}
 
+
+/* 站點共用訪客計數器，與懸浮老師為同一個拖曳父層 */
+#ygj-menu .ygj-visit-badge {
+ position:absolute; z-index:4; bottom:calc(100% + 9px);left:50%;
+ transform:translateX(-50%);display:flex;flex-direction:column;
+ align-items:center;justify-content:center;gap:1px;
+ min-width:132px;padding:8px 13px;border-radius:15px;
+ background:linear-gradient(130deg,#eff6ff,#f5eaff);
+ color:#233267;border:1px solid #b9b0e3;
+ box-shadow:0 7px 22px rgba(24,28,74,.22);
+ pointer-events:none;white-space:nowrap;user-select:none;
+}
+#ygj-menu .ygj-visit-label {font-size:11px;font-weight:750;color:#48578c}
+#ygj-menu .ygj-visit-value {font-size:21px;font-weight:850;font-variant-numeric:tabular-nums;letter-spacing:.5px;color:#32227c}
+html[data-theme="dark"] #ygj-menu .ygj-visit-badge,
+body.dark-mode #ygj-menu .ygj-visit-badge {
+ background:linear-gradient(135deg,#283a65,#352755);
+ color:#f8faff;border-color:#7f7bb7;
+ box-shadow:0 7px 23px rgba(0,0,0,.42);
+}
+html[data-theme="dark"] #ygj-menu .ygj-visit-label,
+body.dark-mode #ygj-menu .ygj-visit-label {color:#d6e8ff}
+html[data-theme="dark"] #ygj-menu .ygj-visit-value,
+body.dark-mode #ygj-menu .ygj-visit-value {color:#ffe18c}
+#ygj-menu.ygj-badge-below .ygj-visit-badge {bottom:auto;top:calc(100% + 9px)}
+#ygj-menu .ygj-panel {z-index:6}
+@media(max-width:700px){
+ #ygj-menu .ygj-visit-badge{padding:6px 11px;min-width:116px}
+ #ygj-menu .ygj-visit-value{font-size:18px}
+}
 </style>
 </head>
 <body class="bg-slate-50 text-slate-900 font-sans p-4 md:p-8 pb-32">
 
-    <div class="ygj-floating-brand" id="ygj-menu"><button type="button" class="ygj-trigger" id="ygj-trigger" aria-controls="ygj-panel" aria-expanded="false"><img src="teacher_mascot.png" alt="Q版楊貴傑老師"><span>AI 工具選單 ▴</span></button><nav class="ygj-panel" id="ygj-panel" aria-label="網站工具導覽" hidden><div class="ygj-panel-title"><img src="teacher_mascot.png" alt=""><span><b>楊貴傑老師</b><small>AI 多媒體工具中心</small></span></div><a target="_blank" rel="noopener noreferrer" href="index.html"><span class="em">📊</span>簡報設計王</a><a target="_blank" rel="noopener noreferrer" href="xx.html" class="current"><span class="em">🎙️</span>對話式語音產生器</a><a target="_blank" rel="noopener noreferrer" href="yy.html"><span class="em">🎬</span>圖音合併工具</a><div class="ygj-panel-note">選擇工具，即可切換網頁</div></nav></div>
+    <div class="ygj-floating-brand" id="ygj-menu"><div id="ygj-visit-badge" class="ygj-visit-badge" title="三個工具網頁共用的累計造訪次數" role="status" aria-live="polite">
+<span class="ygj-visit-label">👁 累計造訪</span>
+<span id="ygj-visit-value" class="ygj-visit-value">讀取中…</span>
+</div><button type="button" class="ygj-trigger" id="ygj-trigger" aria-controls="ygj-panel" aria-expanded="false"><img src="teacher_mascot.png" alt="Q版楊貴傑老師"><span>AI 工具選單 ▴</span></button><nav class="ygj-panel" id="ygj-panel" aria-label="網站工具導覽" hidden><div class="ygj-panel-title"><img src="teacher_mascot.png" alt=""><span><b>楊貴傑老師</b><small>AI 多媒體工具中心</small></span></div><a target="_blank" rel="noopener noreferrer" href="index.html"><span class="em">📊</span>簡報設計王</a><a target="_blank" rel="noopener noreferrer" href="xx.html" class="current"><span class="em">🎙️</span>對話式語音產生器</a><a target="_blank" rel="noopener noreferrer" href="yy.html"><span class="em">🎬</span>圖音合併工具</a><div class="ygj-panel-note">選擇工具，即可切換網頁</div></nav></div>
 
     <div class="max-w-4xl mx-auto space-y-8">
         
@@ -849,6 +882,53 @@ body.dark-mode :is(button,input,select,textarea):focus-visible{outline:2px solid
  document.addEventListener('keydown',e=>{if(e.key==='Escape')close()});
  addEventListener('resize',()=>{const r=wrap.getBoundingClientRect();place(r.left,r.top);save()});
  restore();close();
+})();
+</script>
+<script>
+/* 三個網頁共用一組公開造訪計數；不含 API 密鑰 */
+(()=>{
+ const badge=document.getElementById('ygj-visit-badge');
+ const target=document.getElementById('ygj-visit-value');
+ const widget=document.getElementById('ygj-menu');
+ if(!badge||!target||!widget) return;
+ const key='yangguijie-ai-tools-web-public-views-v1';
+ const endpoint='https://countapi.mileshilliard.com/api/v1/';
+ const sessionKey='ygj-ai-tools-counted-this-session-v1';
+ const hostname=location.hostname.toLowerCase();
+ const isPublic=location.protocol==='https:' && hostname!=='localhost' && hostname!=='127.0.0.1';
+ function show(n){
+   const value=Number(n);
+   target.textContent=Number.isFinite(value)&&value>=0 ? Math.floor(value).toLocaleString('zh-TW') : '暫無資料';
+ }
+ function adjust(){
+   const rect=widget.getBoundingClientRect();
+   widget.classList.toggle('ygj-badge-below',rect.top<72);
+ }
+ const opts={cache:'no-store',mode:'cors'};
+ async function getCount(){
+   try{
+     let counted=false;
+     try{counted=sessionStorage.getItem(sessionKey)==='yes'}catch{}
+     // 本機離線測試不增加真實造訪量；公開 HTTPS 網站每個分頁工作階段僅計一次
+     const method=isPublic && !counted?'hit/':'get/';
+     const response=await fetch(endpoint+method+encodeURIComponent(key),opts);
+     if(!response.ok) throw Error('HTTP '+response.status);
+     const data=await response.json();
+     if(data.value===undefined)throw Error('缺少計數值');
+     show(data.value);
+     if(method==='hit/'){try{sessionStorage.setItem(sessionKey,'yes')}catch{}}
+   }catch(e){
+     target.textContent='暫時無法讀取';
+     badge.title='計數服務連線失敗，稍後重新整理即可；不會顯示虛構數字';
+   }
+ }
+ widget.addEventListener('pointermove',adjust);
+ widget.addEventListener('pointerup',adjust);
+ window.addEventListener('resize',adjust);
+ const observer=new MutationObserver(adjust);
+ observer.observe(widget,{attributes:true,attributeFilter:['style']});
+ adjust();
+ getCount();
 })();
 </script>
 </body>
